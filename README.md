@@ -4,23 +4,37 @@ A lightweight Windows clipboard manager that stores up to 10 copied items (text 
 
 ## How It Works
 
-1. **Copy anything as usual** (Ctrl+C) -- each copied item is automatically saved into a numbered slot (1-10).
-2. **Paste a specific slot** using Ctrl+1 through Ctrl+9 (slots 1-9) or Ctrl+0 (slot 10).
-3. **Take screenshots** with Ctrl+Shift+PrintScreen -- choose full screen, active window, or drag-to-select a region.
+1. **Copy anything as usual** (Ctrl+C) -- each copied item is automatically saved into a numbered slot.
+2. **Paste a specific slot** using your configured hotkey (default: Ctrl+1 through Ctrl+0).
+3. **Take screenshots** with a global hotkey (default: Ctrl+Alt+PrintScreen) -- choose full screen, active window, or drag-to-select a region.
 
-When all 10 slots are full, the oldest item is replaced and you're notified via a system tray balloon.
+When all slots are full, the oldest item is replaced and you're notified via a system tray balloon.
 
-## Hotkeys
+## Features
+
+- **Multi-slot clipboard** -- stores up to 10 text and image items with FIFO rotation
+- **Global hotkeys** -- paste from any slot in any application
+- **Screenshot tool** -- full screen, active window, or region selection
+- **Configurable settings** -- change hotkey modifiers, max slots, startup behavior
+- **System tray** -- minimize to tray, right-click context menu for quick actions
+- **Single instance** -- prevents multiple copies from running and conflicting
+- **Start with Windows** -- optional auto-start at login
+- **Restore defaults** -- one-click reset in settings
+- **Custom app icon** -- branded icon in title bar, taskbar, and system tray
+
+## Default Hotkeys
 
 | Shortcut | Action |
 |---|---|
 | Ctrl+1 ... Ctrl+9 | Paste slot 1 through 9 |
 | Ctrl+0 | Paste slot 10 |
-| Ctrl+Shift+PrintScreen | Take a screenshot (opens mode picker) |
+| Ctrl+Alt+PrintScreen | Take a screenshot (opens mode picker) |
+
+Hotkey modifiers are configurable in Settings (Ctrl, Ctrl+Alt, or Ctrl+Shift).
 
 ## Screenshot Modes
 
-When you press Ctrl+Shift+PrintScreen, a context menu appears with three options:
+When you press the screenshot hotkey, a context menu appears with three options:
 
 - **Full Screen** -- captures all monitors
 - **Active Window** -- captures the currently focused window
@@ -28,41 +42,79 @@ When you press Ctrl+Shift+PrintScreen, a context menu appears with three options
 
 Captured screenshots are stored in the next available slot and placed on the clipboard.
 
-## Features
+## Settings
 
-- Monitors the system clipboard for text and image copies
-- 10 numbered slots with FIFO rotation when full
-- Global hotkeys work from any application
-- Built-in screenshot tool (full screen, active window, region select)
-- System tray icon -- minimize to tray, right-click for quick actions
-- Tray notifications when slots are full or errors occur
-- Deduplicates consecutive identical text copies
-- ListView UI showing slot number, type, and preview for each item
+Open Settings from the toolbar button or tray right-click menu. Options include:
+
+| Setting | Default | Description |
+|---|---|---|
+| Paste hotkey modifier | Ctrl | Modifier for paste hotkeys (Ctrl, Ctrl+Alt, Ctrl+Shift) |
+| Maximum slots | 10 | Number of clipboard slots (1-10) |
+| Screenshot hotkey modifier | Ctrl+Alt | Modifier for screenshot hotkey |
+| Start minimized | Off | Launch minimized to system tray |
+| Run at Windows startup | Off | Auto-start when you log in |
+
+Settings are saved to `%APPDATA%\CtrlCV\settings.json`.
 
 ## Requirements
 
-- Windows 10 or later
-- [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) (LTS)
+- Windows 10 or later (x64)
+- [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) (LTS) -- not needed if using the self-contained single-file EXE
 
-## Build
+## Build & Run
 
 ```bash
 dotnet build
-```
-
-## Run
-
-```bash
 dotnet run
 ```
 
 Or open `CtrlCV.sln` in Visual Studio 2022 and press F5.
 
+## Publish (Single-File EXE)
+
+To create a self-contained single-file EXE that runs on any Windows x64 machine without .NET installed:
+
+```bash
+dotnet publish -p:PublishProfile=SingleFileExe
+```
+
+The output is a single `CtrlCV.exe` in `bin\Publish\`. Copy it to any Windows 10+ (x64) machine and run -- no installation or runtime required.
+
+To publish manually without the profile:
+
+```bash
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+```
+
+## Project Structure
+
+```
+CtrlCV/
+├── Images/
+│   ├── Logo.ico              # App icon (multi-size)
+│   └── Logo.png              # Source logo
+├── Properties/
+│   └── PublishProfiles/
+│       └── SingleFileExe.pubxml
+├── AppSettings.cs            # Settings model, JSON persistence
+├── ClipboardItem.cs          # Text/image clipboard slot with IDisposable
+├── CtrlCV.csproj             # Project file (.NET 8 WinForms)
+├── CtrlCV.sln                # Solution file
+├── Form1.cs                  # Main form logic (hotkeys, clipboard, tray)
+├── Form1.Designer.cs         # Designer-generated UI layout
+├── Form1.resx                # Form resources
+├── NativeMethods.cs          # Win32 P/Invoke declarations
+├── Program.cs                # Entry point, single-instance mutex
+├── ScreenshotHelper.cs       # Screen capture utilities
+├── ScreenshotOverlayForm.cs  # Region selection overlay
+└── SettingsForm.cs           # Settings dialog UI
+```
+
 ## Known Limitations
 
-- **Hotkey conflicts**: Ctrl+1 through Ctrl+0 are global hotkeys and will override shortcuts in other apps (e.g., browser tab switching). A future version may allow custom modifier keys.
+- **Hotkey conflicts**: Global hotkeys may override shortcuts in other apps (e.g., browser tab switching). Change the modifier in Settings to avoid conflicts.
 - **Elevated apps**: Pasting into applications running as Administrator requires CtrlCV to also run as Administrator (Windows UIPI restriction).
-- **No persistence**: Clipboard slots are stored in memory only. They are lost when the app exits.
+- **No persistence**: Clipboard slots are stored in memory only and are lost when the app exits.
 - **Text and images only**: Other clipboard formats (files, rich text, etc.) are not captured.
 
 ## License
