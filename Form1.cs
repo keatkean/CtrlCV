@@ -419,7 +419,7 @@ namespace CtrlCV
             finally
             {
                 bmp.Dispose();
-                _isPasting = false;
+                BeginInvoke(() => _isPasting = false);
             }
         }
 
