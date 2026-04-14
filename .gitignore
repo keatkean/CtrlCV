@@ -1,0 +1,69 @@
+## .NET / Visual Studio
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## MSBuild
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Visual Studio
+.vs/
+*.opendb
+*.opensdf
+*.sdf
+*.cachefile
+*.VC.db
+*.VC.VC.opendb
+launchSettings.json
+
+## Rider / JetBrains
+.idea/
+*.sln.iml
+
+## User-specific files
+*.suo
+*.user
+*.userprefs
+
+## Build results
+[Dd]ebugPublic/
+[Rr]eleases/
+build/
+publish/
+
+## NuGet
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nupkg
+**/packages/repositories.config
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+## macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+## Application logs and config
+ctrlcv_error.log
