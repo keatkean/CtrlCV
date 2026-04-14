@@ -13,7 +13,8 @@
         private System.Windows.Forms.ColumnHeader colPreview;
         private System.Windows.Forms.ImageList imageListThumbs;
 
-        private System.Windows.Forms.Panel panelBottom;
+        private System.Windows.Forms.TableLayoutPanel panelBottom;
+        private System.Windows.Forms.FlowLayoutPanel flowButtons;
         private System.Windows.Forms.Button btnClearAll;
         private System.Windows.Forms.Button btnRemoveSelected;
         private System.Windows.Forms.Button btnSettings;
@@ -37,6 +38,11 @@
         private System.Windows.Forms.ToolStripMenuItem menuTraySelectRegion;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+
+        private System.Windows.Forms.ContextMenuStrip contextMenuSlot;
+        private System.Windows.Forms.ToolStripMenuItem menuSlotPin;
+        private System.Windows.Forms.ToolStripMenuItem menuSlotRemove;
+        private System.Windows.Forms.ToolStripMenuItem menuSlotClearAll;
 
         /// <summary>
         ///  Clean up any resources being used.
@@ -70,7 +76,8 @@
             this.btnRemoveSelected = new System.Windows.Forms.Button();
             this.btnSettings = new System.Windows.Forms.Button();
             this.lblStatus = new System.Windows.Forms.Label();
-            this.panelBottom = new System.Windows.Forms.Panel();
+            this.flowButtons = new System.Windows.Forms.FlowLayoutPanel();
+            this.panelBottom = new System.Windows.Forms.TableLayoutPanel();
             this.menuFullScreen = new System.Windows.Forms.ToolStripMenuItem();
             this.menuActiveWindow = new System.Windows.Forms.ToolStripMenuItem();
             this.menuSelectRegion = new System.Windows.Forms.ToolStripMenuItem();
@@ -102,17 +109,49 @@
             // 
             this.colSlot.Text = "Slot";
             this.colSlot.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            this.colSlot.Width = 80;
+            this.colSlot.Width = -2;
             // 
             // colType
             // 
             this.colType.Text = "Type";
-            this.colType.Width = 70;
+            this.colType.Width = -2;
             // 
             // colPreview
             // 
             this.colPreview.Text = "Preview";
-            this.colPreview.Width = 440;
+            this.colPreview.Width = -2;
+            // 
+            // menuSlotPin
+            // 
+            this.menuSlotPin = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuSlotPin.Name = "menuSlotPin";
+            this.menuSlotPin.Text = "Pin";
+            this.menuSlotPin.Click += new System.EventHandler(this.MenuSlotPin_Click);
+            // 
+            // menuSlotRemove
+            // 
+            this.menuSlotRemove = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuSlotRemove.Name = "menuSlotRemove";
+            this.menuSlotRemove.Text = "Remove";
+            this.menuSlotRemove.ShortcutKeys = System.Windows.Forms.Keys.Delete;
+            this.menuSlotRemove.Click += new System.EventHandler(this.MenuSlotRemove_Click);
+            // 
+            // menuSlotClearAll
+            // 
+            this.menuSlotClearAll = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuSlotClearAll.Name = "menuSlotClearAll";
+            this.menuSlotClearAll.Text = "Clear All";
+            this.menuSlotClearAll.Click += new System.EventHandler(this.BtnClearAll_Click);
+            // 
+            // contextMenuSlot
+            // 
+            this.contextMenuSlot = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.contextMenuSlot.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.menuSlotPin,
+            this.menuSlotRemove,
+            this.menuSlotClearAll});
+            this.contextMenuSlot.Name = "contextMenuSlot";
+            this.contextMenuSlot.Opening += new System.ComponentModel.CancelEventHandler(this.ContextMenuSlot_Opening);
             // 
             // listViewSlots
             // 
@@ -125,20 +164,22 @@
             this.listViewSlots.GridLines = true;
             this.listViewSlots.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
             this.listViewSlots.Location = new System.Drawing.Point(0, 0);
-            this.listViewSlots.MultiSelect = false;
+            this.listViewSlots.MultiSelect = true;
             this.listViewSlots.Name = "listViewSlots";
             this.listViewSlots.Size = new System.Drawing.Size(620, 430);
             this.listViewSlots.SmallImageList = this.imageListThumbs;
             this.listViewSlots.TabIndex = 0;
             this.listViewSlots.UseCompatibleStateImageBehavior = false;
             this.listViewSlots.View = System.Windows.Forms.View.Details;
+            this.listViewSlots.ContextMenuStrip = this.contextMenuSlot;
             // 
             // btnClearAll
             // 
+            this.btnClearAll.AutoSize = true;
+            this.btnClearAll.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
             this.btnClearAll.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.btnClearAll.Location = new System.Drawing.Point(10, 8);
+            this.btnClearAll.Margin = new System.Windows.Forms.Padding(0, 0, 6, 0);
             this.btnClearAll.Name = "btnClearAll";
-            this.btnClearAll.Size = new System.Drawing.Size(110, 32);
             this.btnClearAll.TabIndex = 1;
             this.btnClearAll.Text = "Clear All";
             this.btnClearAll.UseVisualStyleBackColor = true;
@@ -146,10 +187,11 @@
             // 
             // btnRemoveSelected
             // 
+            this.btnRemoveSelected.AutoSize = true;
+            this.btnRemoveSelected.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
             this.btnRemoveSelected.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.btnRemoveSelected.Location = new System.Drawing.Point(130, 8);
+            this.btnRemoveSelected.Margin = new System.Windows.Forms.Padding(0, 0, 6, 0);
             this.btnRemoveSelected.Name = "btnRemoveSelected";
-            this.btnRemoveSelected.Size = new System.Drawing.Size(140, 32);
             this.btnRemoveSelected.TabIndex = 2;
             this.btnRemoveSelected.Text = "Remove Selected";
             this.btnRemoveSelected.UseVisualStyleBackColor = true;
@@ -157,35 +199,50 @@
             // 
             // btnSettings
             // 
+            this.btnSettings.AutoSize = true;
+            this.btnSettings.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowOnly;
             this.btnSettings.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.btnSettings.Location = new System.Drawing.Point(280, 8);
+            this.btnSettings.Margin = new System.Windows.Forms.Padding(0);
             this.btnSettings.Name = "btnSettings";
-            this.btnSettings.Size = new System.Drawing.Size(100, 32);
             this.btnSettings.TabIndex = 5;
             this.btnSettings.Text = "Settings";
             this.btnSettings.UseVisualStyleBackColor = true;
             this.btnSettings.Click += new System.EventHandler(this.BtnSettings_Click);
             // 
+            // flowButtons
+            // 
+            this.flowButtons.AutoSize = true;
+            this.flowButtons.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.flowButtons.Controls.Add(this.btnClearAll);
+            this.flowButtons.Controls.Add(this.btnRemoveSelected);
+            this.flowButtons.Controls.Add(this.btnSettings);
+            this.flowButtons.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowButtons.Margin = new System.Windows.Forms.Padding(0);
+            this.flowButtons.Name = "flowButtons";
+            // 
             // lblStatus
             // 
             this.lblStatus.AutoSize = true;
-            this.lblStatus.Location = new System.Drawing.Point(10, 45);
+            this.lblStatus.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblStatus.Margin = new System.Windows.Forms.Padding(0);
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(213, 20);
             this.lblStatus.TabIndex = 3;
             this.lblStatus.Text = "Monitoring... (0/10 slots used)";
             // 
             // panelBottom
             // 
-            this.panelBottom.Controls.Add(this.btnClearAll);
-            this.panelBottom.Controls.Add(this.btnRemoveSelected);
-            this.panelBottom.Controls.Add(this.btnSettings);
-            this.panelBottom.Controls.Add(this.lblStatus);
+            this.panelBottom.AutoSize = true;
+            this.panelBottom.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.panelBottom.ColumnCount = 1;
+            this.panelBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.panelBottom.RowCount = 2;
+            this.panelBottom.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
+            this.panelBottom.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
+            this.panelBottom.Controls.Add(this.flowButtons, 0, 0);
+            this.panelBottom.Controls.Add(this.lblStatus, 0, 1);
             this.panelBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panelBottom.Location = new System.Drawing.Point(0, 430);
             this.panelBottom.Name = "panelBottom";
-            this.panelBottom.Padding = new System.Windows.Forms.Padding(10, 5, 10, 5);
-            this.panelBottom.Size = new System.Drawing.Size(620, 70);
+            this.panelBottom.Padding = new System.Windows.Forms.Padding(10, 8, 10, 8);
             this.panelBottom.TabIndex = 4;
             // 
             // menuFullScreen

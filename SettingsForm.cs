@@ -52,7 +52,7 @@ namespace CtrlCV
                 AutoSize = true
             };
             table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
             int row = 0;
 
@@ -116,11 +116,10 @@ namespace CtrlCV
                 Margin = new Padding(0, 10, 0, 0)
             };
 
-            btnCancel = new Button { Text = "Cancel", Size = new Size(90, 32), DialogResult = DialogResult.Cancel };
-            btnSave = new Button { Text = "Save", Size = new Size(90, 32), Margin = new Padding(0, 0, 8, 0) };
+            btnCancel = new Button { Text = "Cancel", AutoSize = true, AutoSizeMode = AutoSizeMode.GrowOnly, DialogResult = DialogResult.Cancel };
+            btnSave = new Button { Text = "Save", AutoSize = true, AutoSizeMode = AutoSizeMode.GrowOnly, Margin = new Padding(0, 0, 8, 0) };
             btnSave.Click += BtnSave_Click;
-            var btnDefaults = new Button { Text = "Restore Defaults", AutoSize = true, Margin = new Padding(0, 0, 8, 0) };
-            btnDefaults.Size = new Size(Math.Max(btnDefaults.PreferredSize.Width + 16, 130), 32);
+            var btnDefaults = new Button { Text = "Restore Defaults", AutoSize = true, AutoSizeMode = AutoSizeMode.GrowOnly, Margin = new Padding(0, 0, 8, 0) };
             btnDefaults.Click += BtnDefaults_Click;
 
             buttonPanel.Controls.Add(btnCancel);
@@ -134,9 +133,8 @@ namespace CtrlCV
             AcceptButton = btnSave;
             CancelButton = btnCancel;
 
-            ClientSize = new Size(
-                Math.Max(480, table.PreferredSize.Width + Padding.Horizontal),
-                table.PreferredSize.Height + Padding.Vertical);
+            AutoSize = true;
+            AutoSizeMode = AutoSizeMode.GrowAndShrink;
         }
 
         private static Label MakeLabel(string text)

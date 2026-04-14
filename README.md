@@ -8,15 +8,19 @@ A lightweight Windows clipboard manager that stores up to 10 copied items (text 
 2. **Paste a specific slot** using your configured hotkey (default: Ctrl+1 through Ctrl+0).
 3. **Take screenshots** with a global hotkey (default: Ctrl+Alt+PrintScreen) -- choose full screen, active window, or drag-to-select a region.
 
-When all slots are full, the oldest item is replaced and you're notified via a system tray balloon.
+When all slots are full, the oldest unpinned item is replaced and you're notified via a system tray balloon. Pin important items to protect them from being evicted.
 
 ## Features
 
 - **Multi-slot clipboard** -- stores up to 10 text and image items with FIFO rotation
+- **Pin items** -- pin important items so they aren't replaced when slots are full
 - **Global hotkeys** -- paste from any slot in any application
 - **Screenshot tool** -- full screen, active window, or region selection
+- **Right-click context menu** -- pin, remove, or clear items directly from the list
+- **Multi-select** -- select multiple items with Ctrl+click or Shift+click, then delete them in one go (or press Delete)
 - **Configurable settings** -- change hotkey modifiers, max slots, startup behavior
 - **System tray** -- minimize to tray, right-click context menu for quick actions
+- **DPI-aware UI** -- scales correctly across different displays and scaling settings
 - **Single instance** -- prevents multiple copies from running and conflicting
 - **Start with Windows** -- optional auto-start at login
 - **Restore defaults** -- one-click reset in settings
@@ -110,11 +114,19 @@ CtrlCV/
 └── SettingsForm.cs           # Settings dialog UI
 ```
 
+## Keyboard Shortcuts (in main window)
+
+| Shortcut | Action |
+|---|---|
+| Delete | Remove selected item(s) |
+| Ctrl+Click | Add/remove items from selection |
+| Shift+Click | Select a range of items |
+
 ## Known Limitations
 
 - **Hotkey conflicts**: Global hotkeys may override shortcuts in other apps (e.g., browser tab switching). Change the modifier in Settings to avoid conflicts.
 - **Elevated apps**: Pasting into applications running as Administrator requires CtrlCV to also run as Administrator (Windows UIPI restriction).
-- **No persistence**: Clipboard slots are stored in memory only and are lost when the app exits.
+- **No persistence**: Clipboard slots and pins are stored in memory only and are lost when the app exits.
 - **Text and images only**: Other clipboard formats (files, rich text, etc.) are not captured.
 
 ## License

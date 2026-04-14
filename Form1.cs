@@ -22,6 +22,7 @@ namespace CtrlCV
             menuShow.Font = new Font(menuShow.Font, FontStyle.Bold);
             Load += Form1_Load;
             FormClosing += Form1_FormClosing;
+            listViewSlots.Resize += (_, _) => AutoSizeColumns();
         }
 
         private void LoadAppIcon()
@@ -217,11 +218,17 @@ namespace CtrlCV
         {
             while (_slots.Count >= _settings.MaxSlots)
             {
-                var oldest = _slots[0];
-                _slots.RemoveAt(0);
-                oldest.Dispose();
+                int evictIndex = _slots.FindIndex(s => !s.IsPinned);
+                if (evictIndex < 0)
+                {
+                    item.Dispose();
+                    ShowTrayNotification("Clipboard full", "All slots are pinned. Unpin or remove an item first.");
+                    return;
+                }
 
-                ShowTrayNotification("Clipboard full", "Oldest item replaced to make room.");
+                _slots[evictIndex].Dispose();
+                _slots.RemoveAt(evictIndex);
+                ShowTrayNotification("Clipboard full", "Oldest unpinned item replaced to make room.");
             }
 
             _slots.Add(item);
@@ -444,7 +451,8 @@ namespace CtrlCV
                     int slotNumber = i + 1;
                     string displayNumber = slotNumber == 10 ? "0" : slotNumber.ToString();
 
-                    var lvi = new ListViewItem($"{modName}+{displayNumber}");
+                    string pinPrefix = slot.IsPinned ? "\U0001F4CC " : "";
+                    var lvi = new ListViewItem($"{pinPrefix}{modName}+{displayNumber}");
                     lvi.SubItems.Add(slot.ItemType.ToString());
                     lvi.SubItems.Add(slot.GetPreview());
 
@@ -462,8 +470,7 @@ namespace CtrlCV
                     listViewSlots.Items.Add(lvi);
                 }
 
-                if (colPreview.Width != -2)
-                    colPreview.Width = -2;
+                AutoSizeColumns();
             }
             finally
             {
@@ -471,6 +478,14 @@ namespace CtrlCV
             }
 
             UpdateStatusLabel();
+        }
+
+        private void AutoSizeColumns()
+        {
+            colSlot.Width = -1;
+            colType.Width = -1;
+            int remaining = listViewSlots.ClientSize.Width - colSlot.Width - colType.Width;
+            colPreview.Width = Math.Max(remaining, 100);
         }
 
         private void UpdateStatusLabel()
@@ -494,11 +509,93 @@ namespace CtrlCV
 
         private void BtnRemoveSelected_Click(object? sender, EventArgs e)
         {
+            RemoveSelectedSlot();
+        }
+
+        private void MenuSlotRemove_Click(object? sender, EventArgs e)
+        {
+            RemoveSelectedSlot();
+        }
+
+        private void MenuSlotPin_Click(object? sender, EventArgs e)
+        {
             if (listViewSlots.SelectedIndices.Count == 0)
                 return;
 
-            int selectedIndex = listViewSlots.SelectedIndices[0];
-            RemoveSlot(selectedIndex);
+            bool anyUnpinned = false;
+            foreach (int idx in listViewSlots.SelectedIndices)
+            {
+                if (idx < _slots.Count && !_slots[idx].IsPinned)
+                {
+                    anyUnpinned = true;
+                    break;
+                }
+            }
+
+            foreach (int idx in listViewSlots.SelectedIndices)
+            {
+                if (idx < _slots.Count)
+                    _slots[idx].IsPinned = anyUnpinned;
+            }
+
+            RefreshListView();
+        }
+
+        private void ContextMenuSlot_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            int count = listViewSlots.SelectedIndices.Count;
+            bool hasSelection = count > 0;
+            menuSlotPin.Enabled = hasSelection;
+            menuSlotRemove.Enabled = hasSelection;
+            menuSlotRemove.Text = count > 1 ? $"Remove ({count})" : "Remove";
+
+            if (hasSelection)
+            {
+                bool allPinned = true;
+                foreach (int idx in listViewSlots.SelectedIndices)
+                {
+                    if (idx < _slots.Count && !_slots[idx].IsPinned)
+                    {
+                        allPinned = false;
+                        break;
+                    }
+                }
+                menuSlotPin.Text = allPinned ? "Unpin" : "Pin";
+            }
+            else
+            {
+                menuSlotPin.Text = "Pin";
+            }
+        }
+
+        private void RemoveSelectedSlot()
+        {
+            if (listViewSlots.SelectedIndices.Count == 0)
+                return;
+
+            int firstIndex = listViewSlots.SelectedIndices[0];
+
+            var indices = new List<int>();
+            foreach (int idx in listViewSlots.SelectedIndices)
+                indices.Add(idx);
+
+            for (int i = indices.Count - 1; i >= 0; i--)
+            {
+                int idx = indices[i];
+                if (idx >= 0 && idx < _slots.Count)
+                {
+                    _slots[idx].Dispose();
+                    _slots.RemoveAt(idx);
+                }
+            }
+
+            RefreshListView();
+
+            if (listViewSlots.Items.Count > 0)
+            {
+                int newIndex = Math.Min(firstIndex, listViewSlots.Items.Count - 1);
+                listViewSlots.Items[newIndex].Selected = true;
+            }
         }
 
         private void BtnSettings_Click(object? sender, EventArgs e)

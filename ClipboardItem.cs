@@ -12,6 +12,7 @@ namespace CtrlCV
         public string? Text { get; }
         public Image? ImageData { get; private set; }
         public DateTime CopiedAt { get; }
+        public bool IsPinned { get; set; }
 
         private bool _disposed;
 
