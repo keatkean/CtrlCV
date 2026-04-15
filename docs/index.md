@@ -3,12 +3,51 @@ layout: default
 title: CtrlCV - Multi-Slot Clipboard Manager
 ---
 
+<style>
+.download-btn {
+  display: inline-block;
+  padding: 14px 36px;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #fff !important;
+  background-color: #1e6f28;
+  border-radius: 8px;
+  text-decoration: none !important;
+  margin: 8px 8px 8px 0;
+  transition: background-color 0.2s;
+}
+.download-btn:hover { background-color: #165a20; }
+.github-btn {
+  display: inline-block;
+  padding: 14px 36px;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #fff !important;
+  background-color: #333;
+  border-radius: 8px;
+  text-decoration: none !important;
+  margin: 8px 8px 8px 0;
+  transition: background-color 0.2s;
+}
+.github-btn:hover { background-color: #555; }
+.download-box {
+  text-align: center;
+  margin: 32px 0;
+  padding: 24px;
+  background: #f6f8fa;
+  border-radius: 10px;
+}
+</style>
+
 # Multi-Slot Clipboard Manager for Windows
 
 Copy up to 10 items, paste any of them instantly with a hotkey, and capture screenshots -- all from one lightweight app.
 
-[Download Latest Release](https://github.com/keatkean/CtrlCV/releases/latest){: .btn }
-[View on GitHub](https://github.com/keatkean/CtrlCV){: .btn }
+<div class="download-box">
+  <a href="https://github.com/keatkean/CtrlCV/releases/latest" class="download-btn">Download Latest Release</a>
+  <a href="https://github.com/keatkean/CtrlCV" class="github-btn">View on GitHub</a>
+  <br><small>Windows 10+ (x64) &middot; No installation required &middot; Single-file EXE</small>
+</div>
 
 ---
 
@@ -121,8 +160,14 @@ This project is licensed under the [GNU General Public License v3.0](https://git
 
 ---
 
+<div class="download-box">
+  <strong style="font-size: 1.1rem;">Ready to try CtrlCV?</strong><br><br>
+  <a href="https://github.com/keatkean/CtrlCV/releases/latest" class="download-btn">Download Latest Release</a>
+  <br><small>Windows 10+ (x64) &middot; No installation required &middot; Single-file EXE</small>
+</div>
+
 <p style="text-align: center; color: #888; font-size: 0.85em;">
   Made by <a href="https://github.com/keatkean">keatkean</a> &middot;
   <a href="https://github.com/keatkean/CtrlCV">Source Code</a> &middot;
-  <a href="https://github.com/keatkean/CtrlCV/releases/latest">Download</a>
+  <a href="https://github.com/keatkean/CtrlCV/releases/latest">Releases</a>
 </p>
