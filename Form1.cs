@@ -45,6 +45,11 @@ namespace CtrlCV
 
         private void Form1_Load(object? sender, EventArgs e)
         {
+            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            var versionStr = version != null ? $"{version.Major}.{version.Minor}.{version.Build}" : "1.0.0";
+            Text = $"CtrlCV - Clipboard Manager v{versionStr}";
+            notifyIcon.Text = $"CtrlCV v{versionStr}";
+
             if (!AddClipboardFormatListener(Handle))
             {
                 MessageBox.Show(
