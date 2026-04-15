@@ -4,4 +4,4 @@ theme: jekyll-theme-cayman
 url: https://keatkean.github.io
 baseurl: /CtrlCV
 
-show_downloads: true
+show_downloads: false
