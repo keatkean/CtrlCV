@@ -1,0 +1,7 @@
+title: CtrlCV
+description: A lightweight Windows clipboard manager with multi-slot clipboard, global hotkeys, and a built-in screenshot tool
+theme: jekyll-theme-cayman
+url: https://keatkean.github.io
+baseurl: /CtrlCV
+
+show_downloads: true
