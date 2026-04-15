@@ -25,6 +25,7 @@ When all slots are full, the oldest unpinned item is replaced and you're notifie
 - **Start with Windows** -- optional auto-start at login
 - **Restore defaults** -- one-click reset in settings
 - **Custom app icon** -- branded icon in title bar, taskbar, and system tray
+- **Check for updates** -- check for new versions from GitHub Releases and auto-update in place
 
 ## Default Hotkeys
 
@@ -111,7 +112,8 @@ CtrlCV/
 ├── Program.cs                # Entry point, single-instance mutex
 ├── ScreenshotHelper.cs       # Screen capture utilities
 ├── ScreenshotOverlayForm.cs  # Region selection overlay
-└── SettingsForm.cs           # Settings dialog UI
+├── SettingsForm.cs           # Settings dialog UI
+└── UpdateChecker.cs          # GitHub Releases update checker and self-updater
 ```
 
 ## Keyboard Shortcuts (in main window)

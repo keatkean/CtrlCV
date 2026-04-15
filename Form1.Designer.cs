@@ -27,6 +27,7 @@
         private System.Windows.Forms.ToolStripMenuItem menuSettings;
         private System.Windows.Forms.ToolStripMenuItem menuClearAll;
         private System.Windows.Forms.ToolStripMenuItem menuExit;
+        private System.Windows.Forms.ToolStripMenuItem menuCheckForUpdates;
 
         private System.Windows.Forms.ContextMenuStrip screenshotMenu;
         private System.Windows.Forms.ToolStripMenuItem menuFullScreen;
@@ -90,6 +91,7 @@
             this.menuSettings = new System.Windows.Forms.ToolStripMenuItem();
             this.menuClearAll = new System.Windows.Forms.ToolStripMenuItem();
             this.menuExit = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuCheckForUpdates = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.contextMenuTray = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -320,6 +322,13 @@
             this.menuSettings.Text = "Settings";
             this.menuSettings.Click += new System.EventHandler(this.BtnSettings_Click);
             // 
+            // menuCheckForUpdates
+            // 
+            this.menuCheckForUpdates.Name = "menuCheckForUpdates";
+            this.menuCheckForUpdates.Size = new System.Drawing.Size(180, 22);
+            this.menuCheckForUpdates.Text = "Check for Updates";
+            this.menuCheckForUpdates.Click += new System.EventHandler(this.MenuCheckForUpdates_Click);
+            // 
             // menuClearAll
             // 
             this.menuClearAll.Name = "menuClearAll";
@@ -340,6 +349,7 @@
             this.menuShow,
             this.menuScreenshot,
             this.menuSettings,
+            this.menuCheckForUpdates,
             this.toolStripSeparator1,
             this.menuClearAll,
             this.toolStripSeparator2,

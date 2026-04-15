@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using static CtrlCV.NativeMethods;
 
@@ -624,6 +625,101 @@ namespace CtrlCV
                 }
 
                 RefreshListView();
+            }
+        }
+
+        private async void MenuCheckForUpdates_Click(object? sender, EventArgs e)
+        {
+            menuCheckForUpdates.Enabled = false;
+            menuCheckForUpdates.Text = "Checking...";
+            try
+            {
+                var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                var currentVersion = version != null
+                    ? $"{version.Major}.{version.Minor}.{version.Build}"
+                    : "0.0.0";
+
+                var result = await UpdateChecker.CheckForUpdateAsync(currentVersion);
+
+                if (!result.IsUpdateAvailable)
+                {
+                    MessageBox.Show(
+                        $"You are running the latest version (v{currentVersion}).",
+                        "CtrlCV - No Updates",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    return;
+                }
+
+                var notes = string.IsNullOrWhiteSpace(result.ReleaseNotes)
+                    ? ""
+                    : $"\n\nRelease notes:\n{result.ReleaseNotes}";
+
+                var confirmDownload = MessageBox.Show(
+                    $"A new version is available: v{result.LatestVersion}\n" +
+                    $"You are running v{currentVersion}.{notes}\n\n" +
+                    "Do you want to download and install the update?",
+                    "CtrlCV - Update Available",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (confirmDownload != DialogResult.Yes)
+                    return;
+
+                if (string.IsNullOrEmpty(result.DownloadUrl))
+                {
+                    Process.Start(new ProcessStartInfo(result.ReleaseUrl) { UseShellExecute = true });
+                    return;
+                }
+
+                menuCheckForUpdates.Text = "Downloading...";
+
+                var currentExePath = Environment.ProcessPath
+                    ?? Path.Combine(AppContext.BaseDirectory, "CtrlCV.exe");
+                var updateFilePath = currentExePath + ".update";
+
+                var progress = new Progress<int>(pct =>
+                {
+                    if (pct < 100)
+                        menuCheckForUpdates.Text = $"Downloading... {pct}%";
+                    else
+                        menuCheckForUpdates.Text = "Download complete";
+                });
+
+                await UpdateChecker.DownloadUpdateAsync(result.DownloadUrl, updateFilePath, progress);
+
+                var confirmRestart = MessageBox.Show(
+                    "Update downloaded successfully.\n\nRestart now to apply the update?",
+                    "CtrlCV - Update Ready",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (confirmRestart != DialogResult.Yes)
+                {
+                    ShowTrayNotification("Update ready",
+                        "The update has been downloaded. Restart the app to apply it.");
+                    return;
+                }
+
+                UpdateChecker.ApplyUpdateAndRestart(updateFilePath, currentExePath);
+                _isExiting = true;
+                notifyIcon.Visible = false;
+                Application.Exit();
+            }
+            catch (Exception ex)
+            {
+                LogError("Update check failed", ex);
+                MessageBox.Show(
+                    "Could not check for updates. Please check your internet connection and try again.\n\n" +
+                    $"Details: {ex.Message}",
+                    "CtrlCV - Update Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
+            finally
+            {
+                menuCheckForUpdates.Text = "Check for Updates";
+                menuCheckForUpdates.Enabled = true;
             }
         }
 

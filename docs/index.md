@@ -78,6 +78,7 @@ When all slots are full, the oldest unpinned item is replaced. Pin important ite
 | **DPI-aware** | Scales correctly across different displays and scaling settings |
 | **Single instance** | Prevents multiple copies from running |
 | **Start with Windows** | Optional auto-start at login |
+| **Check for updates** | Check for new versions from GitHub Releases and auto-update in place |
 
 ---
 
