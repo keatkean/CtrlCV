@@ -17,6 +17,15 @@ namespace CtrlCV
         public bool StartMinimized { get; set; } = false;
         public bool RunAtStartup { get; set; } = false;
 
+        public bool WidgetEnabled { get; set; } = false;
+        public bool WidgetCompactMode { get; set; } = false;
+        public double WidgetOpacity { get; set; } = 0.85;
+        public bool WidgetAutoHide { get; set; } = true;
+        public int WidgetAutoHideDelayMs { get; set; } = 3000;
+        public int WidgetLeft { get; set; } = -1;
+        public int WidgetTop { get; set; } = -1;
+        public bool WidgetVertical { get; set; } = false;
+
         private static readonly string SettingsDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "CtrlCV");
@@ -79,6 +88,8 @@ namespace CtrlCV
                     if (settings != null)
                     {
                         settings.MaxSlots = Math.Clamp(settings.MaxSlots, 1, 10);
+                        settings.WidgetOpacity = Math.Clamp(settings.WidgetOpacity, 0.2, 1.0);
+                        settings.WidgetAutoHideDelayMs = Math.Clamp(settings.WidgetAutoHideDelayMs, 1000, 10000);
                         return settings;
                     }
                 }

@@ -26,6 +26,12 @@ When all slots are full, the oldest unpinned item is replaced and you're notifie
 - **Restore defaults** -- one-click reset in settings
 - **Custom app icon** -- branded icon in title bar, taskbar, and system tray
 - **Check for updates** -- check for new versions from GitHub Releases and auto-update in place
+- **Floating clipboard widget** -- always-on-top toolbar showing thumbnails of all slots
+  - Drag-and-drop from the widget into any app
+  - Hover preview shows full text or full-size image
+  - Compact mode with color-coded numbered circles
+  - Configurable opacity, position, auto-hide behavior
+  - Horizontal or vertical orientation
 
 ## Default Hotkeys
 
@@ -58,6 +64,12 @@ Open Settings from the toolbar button or tray right-click menu. Options include:
 | Screenshot hotkey modifier | Ctrl+Alt | Modifier for screenshot hotkey |
 | Start minimized | Off | Launch minimized to system tray |
 | Run at Windows startup | Off | Auto-start when you log in |
+| Enable floating widget | Off | Show the floating clipboard toolbar |
+| Compact mode | Off | Use small color-coded circles instead of thumbnails |
+| Widget opacity | 85% | Opacity of the floating widget (20-100%) |
+| Auto-hide | On | Fade the widget when the mouse leaves |
+| Auto-hide delay | 3s | Seconds before the widget fades (1-10) |
+| Widget orientation | Horizontal | Horizontal or vertical layout |
 
 Settings are saved to `%APPDATA%\CtrlCV\settings.json`.
 
@@ -95,25 +107,34 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
 
 ```
 CtrlCV/
+├── Forms/
+│   ├── FloatingWidgetForm.cs     # Floating clipboard toolbar (thumbnails, drag-and-drop)
+│   ├── Form1.cs                  # Main form UI shell (ListView, tray, settings)
+│   ├── Form1.Designer.cs         # Designer-generated UI layout
+│   ├── Form1.resx                # Form resources
+│   ├── PreviewPopupForm.cs       # Hover preview popup for widget
+│   ├── ScreenshotOverlayForm.cs  # Region selection overlay
+│   └── SettingsForm.cs           # Settings dialog UI
+├── Helpers/
+│   ├── NativeMethods.cs          # Win32 P/Invoke declarations
+│   ├── ScreenshotHelper.cs       # Screen capture utilities
+│   └── UpdateChecker.cs          # GitHub Releases update checker and self-updater
 ├── Images/
-│   ├── Logo.ico              # App icon (multi-size)
-│   └── Logo.png              # Source logo
+│   ├── Logo.ico                  # App icon (multi-size)
+│   └── Logo.png                  # Source logo
+├── Models/
+│   ├── AppSettings.cs            # Settings model, JSON persistence
+│   └── ClipboardItem.cs          # Text/image clipboard slot with IDisposable
 ├── Properties/
 │   └── PublishProfiles/
 │       └── SingleFileExe.pubxml
-├── AppSettings.cs            # Settings model, JSON persistence
-├── ClipboardItem.cs          # Text/image clipboard slot with IDisposable
-├── CtrlCV.csproj             # Project file (.NET 8 WinForms)
-├── CtrlCV.sln                # Solution file
-├── Form1.cs                  # Main form logic (hotkeys, clipboard, tray)
-├── Form1.Designer.cs         # Designer-generated UI layout
-├── Form1.resx                # Form resources
-├── NativeMethods.cs          # Win32 P/Invoke declarations
-├── Program.cs                # Entry point, single-instance mutex
-├── ScreenshotHelper.cs       # Screen capture utilities
-├── ScreenshotOverlayForm.cs  # Region selection overlay
-├── SettingsForm.cs           # Settings dialog UI
-└── UpdateChecker.cs          # GitHub Releases update checker and self-updater
+├── Services/
+│   ├── ClipboardManager.cs       # Clipboard monitoring, slot storage, eviction
+│   ├── HotkeyManager.cs         # Global hotkey registration and dispatch
+│   └── PasteService.cs           # Clipboard paste simulation (set + Ctrl+V)
+├── CtrlCV.csproj                 # Project file (.NET 8 WinForms)
+├── CtrlCV.sln                    # Solution file
+└── Program.cs                    # Entry point, single-instance mutex
 ```
 
 ## Keyboard Shortcuts (in main window)

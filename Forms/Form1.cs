@@ -6,13 +6,11 @@ namespace CtrlCV
 {
     public partial class Form1 : Form
     {
-        private readonly List<ClipboardItem> _slots = new();
         private AppSettings _settings;
-        private bool _isPasting;
-        private bool _isProcessingClipboard;
-        private string? _lastClipboardText;
-        private bool _clipboardListenerRegistered;
-        private readonly List<int> _registeredHotkeyIds = new();
+        private ClipboardManager _clipboardManager = null!;
+        private HotkeyManager _hotkeyManager = null!;
+        private PasteService _pasteService = null!;
+        private FloatingWidgetForm? _widget;
         private bool _isExiting;
 
         public Form1()
@@ -51,7 +49,11 @@ namespace CtrlCV
             Text = $"CtrlCV - Clipboard Manager v{versionStr}";
             notifyIcon.Text = $"CtrlCV v{versionStr}";
 
-            if (!AddClipboardFormatListener(Handle))
+            _clipboardManager = new ClipboardManager(Handle, _settings);
+            _clipboardManager.SlotsChanged += OnSlotsChanged;
+            _clipboardManager.NotificationRequested += ShowTrayNotification;
+
+            if (!_clipboardManager.StartListening())
             {
                 MessageBox.Show(
                     "Failed to start clipboard monitoring. The application cannot function.\n\n" +
@@ -63,10 +65,18 @@ namespace CtrlCV
                 Application.Exit();
                 return;
             }
-            _clipboardListenerRegistered = true;
 
-            RegisterAllHotkeys();
+            _hotkeyManager = new HotkeyManager(Handle);
+            _hotkeyManager.HotkeyPressed += OnHotkeyPressed;
+            _hotkeyManager.RegisterAll(_settings);
+
+            _pasteService = new PasteService(_clipboardManager);
+            _pasteService.NotificationRequested += ShowTrayNotification;
+
             UpdateStatusLabel();
+
+            if (_settings.WidgetEnabled)
+                ShowWidget();
 
             if (_settings.StartMinimized)
             {
@@ -75,62 +85,28 @@ namespace CtrlCV
             }
         }
 
-        #region Hotkey Registration
-
-        private void RegisterAllHotkeys()
+        private void ShowWidget()
         {
-            var failedKeys = new List<string>();
-            var pasteModFlags = _settings.GetPasteModifierFlags();
-            var pasteModName = _settings.GetPasteModifierDisplayName();
-            int slotsToRegister = Math.Min(_settings.MaxSlots, 10);
+            if (_widget != null && !_widget.IsDisposed)
+                return;
 
-            for (int i = 0; i < Math.Min(slotsToRegister, 9); i++)
-            {
-                uint vk = (uint)(0x31 + i); // VK_1 through VK_9
-                int id = HOTKEY_SLOT_BASE + i;
-                if (RegisterHotKey(Handle, id, pasteModFlags, vk))
-                    _registeredHotkeyIds.Add(id);
-                else
-                    failedKeys.Add($"{pasteModName}+{i + 1}");
-            }
-
-            if (slotsToRegister == 10)
-            {
-                if (RegisterHotKey(Handle, HOTKEY_SLOT_BASE + 9, pasteModFlags, 0x30))
-                    _registeredHotkeyIds.Add(HOTKEY_SLOT_BASE + 9);
-                else
-                    failedKeys.Add($"{pasteModName}+0");
-            }
-
-            var ssModFlags = _settings.GetScreenshotModifierFlags();
-            var ssModName = _settings.GetScreenshotModifierDisplayName();
-            if (RegisterHotKey(Handle, HOTKEY_SCREENSHOT, ssModFlags, VK_SNAPSHOT))
-                _registeredHotkeyIds.Add(HOTKEY_SCREENSHOT);
-            else
-                failedKeys.Add($"{ssModName}+PrintScreen");
-
-            if (failedKeys.Count > 0)
-            {
-                MessageBox.Show(
-                    "Could not register the following hotkeys (already in use by another app):\n" +
-                    string.Join("\n", failedKeys.Select(k => $"  - {k}")) +
-                    "\n\nThese shortcuts will not work until the conflict is resolved.",
-                    "CtrlCV - Hotkey Warning",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-            }
+            _widget = new FloatingWidgetForm(_clipboardManager, _pasteService, _settings);
+            _widget.Owner = this;
+            _widget.Show();
         }
 
-        private void UnregisterAllHotkeys()
+        private void HideWidget()
         {
-            foreach (var id in _registeredHotkeyIds)
+            if (_widget == null || _widget.IsDisposed)
             {
-                UnregisterHotKey(Handle, id);
+                _widget = null;
+                return;
             }
-            _registeredHotkeyIds.Clear();
-        }
 
-        #endregion
+            _widget.Close();
+            _widget.Dispose();
+            _widget = null;
+        }
 
         #region WndProc
 
@@ -139,11 +115,11 @@ namespace CtrlCV
             switch (m.Msg)
             {
                 case WM_CLIPBOARDUPDATE:
-                    OnClipboardUpdate();
+                    _clipboardManager?.HandleClipboardUpdate();
                     break;
 
                 case WM_HOTKEY:
-                    OnHotKey(m.WParam.ToInt32());
+                    _hotkeyManager?.HandleHotkeyMessage(m.WParam.ToInt32());
                     break;
             }
 
@@ -152,189 +128,26 @@ namespace CtrlCV
 
         #endregion
 
-        #region Clipboard Monitoring
+        #region Event Handlers
 
-        private void OnClipboardUpdate()
+        private void OnSlotsChanged()
         {
-            if (_isPasting || _isProcessingClipboard)
-                return;
-
-            _isProcessingClipboard = true;
-            try
-            {
-                if (ClipboardRetry(() => Clipboard.ContainsImage()) == true)
-                {
-                    var img = ClipboardRetry(() => Clipboard.GetImage());
-                    if (img != null)
-                    {
-                        AddSlot(new ClipboardItem(img));
-                        img.Dispose();
-                        return;
-                    }
-                }
-
-                if (ClipboardRetry(() => Clipboard.ContainsText()) == true)
-                {
-                    var text = ClipboardRetry(() => Clipboard.GetText());
-                    if (!string.IsNullOrEmpty(text))
-                    {
-                        if (text == _lastClipboardText)
-                            return;
-
-                        _lastClipboardText = text;
-                        AddSlot(new ClipboardItem(text));
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError("Clipboard monitoring error", ex);
-            }
-            finally
-            {
-                _isProcessingClipboard = false;
-            }
-        }
-
-        private static T? ClipboardRetry<T>(Func<T> action, int maxRetries = 3, int delayMs = 100)
-        {
-            for (int i = 0; i < maxRetries; i++)
-            {
-                try
-                {
-                    return action();
-                }
-                catch (ExternalException) when (i < maxRetries - 1)
-                {
-                    Thread.Sleep(delayMs);
-                }
-                catch (ExternalException)
-                {
-                    return default;
-                }
-            }
-            return default;
-        }
-
-        #endregion
-
-        #region Slot Management
-
-        private void AddSlot(ClipboardItem item)
-        {
-            while (_slots.Count >= _settings.MaxSlots)
-            {
-                int evictIndex = _slots.FindIndex(s => !s.IsPinned);
-                if (evictIndex < 0)
-                {
-                    item.Dispose();
-                    ShowTrayNotification("Clipboard full", "All slots are pinned. Unpin or remove an item first.");
-                    return;
-                }
-
-                _slots[evictIndex].Dispose();
-                _slots.RemoveAt(evictIndex);
-                ShowTrayNotification("Clipboard full", "Oldest unpinned item replaced to make room.");
-            }
-
-            _slots.Add(item);
             RefreshListView();
+            if (_widget != null && !_widget.IsDisposed)
+                _widget.RefreshSlots();
         }
 
-        private void RemoveSlot(int index)
+        private void OnHotkeyPressed(int id)
         {
-            if (index < 0 || index >= _slots.Count)
-                return;
-
-            var item = _slots[index];
-            _slots.RemoveAt(index);
-            item.Dispose();
-            RefreshListView();
-        }
-
-        private void ClearAllSlots()
-        {
-            foreach (var slot in _slots)
-                slot.Dispose();
-            _slots.Clear();
-            _lastClipboardText = null;
-            RefreshListView();
-        }
-
-        #endregion
-
-        #region Hotkey Handling
-
-        private void OnHotKey(int hotkeyId)
-        {
-            if (hotkeyId == HOTKEY_SCREENSHOT)
+            if (id == HotkeyManager.SCREENSHOT_HOTKEY_ID)
             {
                 ShowScreenshotMenu();
                 return;
             }
 
-            int slotIndex = hotkeyId - HOTKEY_SLOT_BASE;
-            if (slotIndex >= 0 && slotIndex < _slots.Count)
+            if (id >= 0 && id < _clipboardManager.Slots.Count)
             {
-                PasteFromSlot(slotIndex);
-            }
-        }
-
-        #endregion
-
-        #region Paste Simulation
-
-        private async void PasteFromSlot(int slotIndex)
-        {
-            if (slotIndex < 0 || slotIndex >= _slots.Count)
-                return;
-
-            _isPasting = true;
-            try
-            {
-                var item = _slots[slotIndex];
-                bool clipboardSet = false;
-
-                if (item.ItemType == ClipboardItemType.Text && item.Text != null)
-                {
-                    clipboardSet = ClipboardRetry(() =>
-                    {
-                        Clipboard.SetText(item.Text);
-                        return true;
-                    }) == true;
-                }
-                else if (item.ItemType == ClipboardItemType.Image && item.ImageData != null)
-                {
-                    clipboardSet = ClipboardRetry(() =>
-                    {
-                        Clipboard.SetImage(item.ImageData);
-                        return true;
-                    }) == true;
-                }
-
-                if (!clipboardSet)
-                {
-                    ShowTrayNotification("Paste failed", "Could not access clipboard. It may be in use by another application.");
-                    return;
-                }
-
-                await Task.Delay(50);
-
-                keybd_event(VK_CONTROL, 0, 0, UIntPtr.Zero);
-                keybd_event(VK_V, 0, 0, UIntPtr.Zero);
-                keybd_event(VK_V, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
-                keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
-
-                await Task.Delay(100);
-            }
-            catch (Exception ex)
-            {
-                LogError("Paste simulation error", ex);
-                ShowTrayNotification("Paste failed", "An error occurred during paste.");
-            }
-            finally
-            {
-                _isPasting = false;
+                _ = _pasteService.PasteFromSlotAsync(id);
             }
         }
 
@@ -417,13 +230,13 @@ namespace CtrlCV
 
         private void StoreScreenshot(Bitmap bmp)
         {
-            _isPasting = true;
+            _clipboardManager.SetSuppressMonitoring(true);
             try
             {
                 var item = new ClipboardItem(bmp);
-                AddSlot(item);
+                _clipboardManager.AddSlot(item);
 
-                ClipboardRetry(() =>
+                ClipboardManager.ClipboardRetry(() =>
                 {
                     Clipboard.SetImage(bmp);
                     return true;
@@ -432,7 +245,7 @@ namespace CtrlCV
             finally
             {
                 bmp.Dispose();
-                BeginInvoke(() => _isPasting = false);
+                BeginInvoke(() => _clipboardManager.SetSuppressMonitoring(false));
             }
         }
 
@@ -449,11 +262,12 @@ namespace CtrlCV
                 imageListThumbs.Images.Clear();
 
                 int thumbIndex = 0;
-
+                var slots = _clipboardManager.Slots;
                 var modName = _settings.GetPasteModifierDisplayName();
-                for (int i = 0; i < _slots.Count; i++)
+
+                for (int i = 0; i < slots.Count; i++)
                 {
-                    var slot = _slots[i];
+                    var slot = slots[i];
                     int slotNumber = i + 1;
                     string displayNumber = slotNumber == 10 ? "0" : slotNumber.ToString();
 
@@ -496,7 +310,7 @@ namespace CtrlCV
 
         private void UpdateStatusLabel()
         {
-            int count = _slots.Count;
+            int count = _clipboardManager?.Slots.Count ?? 0;
             int max = _settings.MaxSlots;
             if (count >= max)
                 lblStatus.Text = $"Monitoring... ({count}/{max} slots used \u2014 oldest will be replaced on next copy)";
@@ -510,7 +324,7 @@ namespace CtrlCV
 
         private void BtnClearAll_Click(object? sender, EventArgs e)
         {
-            ClearAllSlots();
+            _clipboardManager.ClearAll();
         }
 
         private void BtnRemoveSelected_Click(object? sender, EventArgs e)
@@ -528,10 +342,11 @@ namespace CtrlCV
             if (listViewSlots.SelectedIndices.Count == 0)
                 return;
 
+            var slots = _clipboardManager.Slots;
             bool anyUnpinned = false;
             foreach (int idx in listViewSlots.SelectedIndices)
             {
-                if (idx < _slots.Count && !_slots[idx].IsPinned)
+                if (idx < slots.Count && !slots[idx].IsPinned)
                 {
                     anyUnpinned = true;
                     break;
@@ -540,11 +355,11 @@ namespace CtrlCV
 
             foreach (int idx in listViewSlots.SelectedIndices)
             {
-                if (idx < _slots.Count)
-                    _slots[idx].IsPinned = anyUnpinned;
+                if (idx < slots.Count)
+                    slots[idx].IsPinned = anyUnpinned;
             }
 
-            RefreshListView();
+            _clipboardManager.NotifyChanged();
         }
 
         private void ContextMenuSlot_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
@@ -557,10 +372,11 @@ namespace CtrlCV
 
             if (hasSelection)
             {
+                var slots = _clipboardManager.Slots;
                 bool allPinned = true;
                 foreach (int idx in listViewSlots.SelectedIndices)
                 {
-                    if (idx < _slots.Count && !_slots[idx].IsPinned)
+                    if (idx < slots.Count && !slots[idx].IsPinned)
                     {
                         allPinned = false;
                         break;
@@ -585,17 +401,7 @@ namespace CtrlCV
             foreach (int idx in listViewSlots.SelectedIndices)
                 indices.Add(idx);
 
-            for (int i = indices.Count - 1; i >= 0; i--)
-            {
-                int idx = indices[i];
-                if (idx >= 0 && idx < _slots.Count)
-                {
-                    _slots[idx].Dispose();
-                    _slots.RemoveAt(idx);
-                }
-            }
-
-            RefreshListView();
+            _clipboardManager.RemoveSlots(indices);
 
             if (listViewSlots.Items.Count > 0)
             {
@@ -611,20 +417,20 @@ namespace CtrlCV
 
         private void OpenSettings()
         {
+            bool wasWidgetEnabled = _settings.WidgetEnabled;
             using var form = new SettingsForm(_settings);
             if (form.ShowDialog(this) == DialogResult.OK && form.SettingsChanged)
             {
-                UnregisterAllHotkeys();
-                RegisterAllHotkeys();
+                _hotkeyManager.UnregisterAll();
+                _hotkeyManager.RegisterAll(_settings);
+                _clipboardManager.TrimToMaxSlots();
 
-                while (_slots.Count > _settings.MaxSlots)
-                {
-                    var oldest = _slots[0];
-                    _slots.RemoveAt(0);
-                    oldest.Dispose();
-                }
-
-                RefreshListView();
+                if (_settings.WidgetEnabled && !wasWidgetEnabled)
+                    ShowWidget();
+                else if (!_settings.WidgetEnabled && wasWidgetEnabled)
+                    HideWidget();
+                else if (_widget != null && !_widget.IsDisposed)
+                    _widget.ApplySettings();
             }
         }
 
@@ -750,6 +556,22 @@ namespace CtrlCV
             RestoreFromTray();
         }
 
+        private void MenuToggleWidget_Click(object? sender, EventArgs e)
+        {
+            if (_widget != null && !_widget.IsDisposed)
+            {
+                HideWidget();
+                _settings.WidgetEnabled = false;
+            }
+            else
+            {
+                ShowWidget();
+                _settings.WidgetEnabled = true;
+            }
+            try { _settings.Save(); }
+            catch { }
+        }
+
         private void MenuExit_Click(object? sender, EventArgs e)
         {
             _isExiting = true;
@@ -772,18 +594,9 @@ namespace CtrlCV
         {
             try
             {
-                if (_clipboardListenerRegistered)
-                {
-                    RemoveClipboardFormatListener(Handle);
-                    _clipboardListenerRegistered = false;
-                }
-
-                UnregisterAllHotkeys();
-
-                foreach (var slot in _slots)
-                    slot.Dispose();
-                _slots.Clear();
-
+                _widget = null;
+                _hotkeyManager?.Dispose();
+                _clipboardManager?.Dispose();
                 notifyIcon.Visible = false;
             }
             catch (Exception ex)
@@ -821,7 +634,6 @@ namespace CtrlCV
             }
             catch
             {
-                // Last resort: can't even write to log
             }
         }
 

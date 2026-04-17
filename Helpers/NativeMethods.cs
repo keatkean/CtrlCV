@@ -54,5 +54,10 @@ namespace CtrlCV
 
         public const int HOTKEY_SLOT_BASE = 0;
         public const int HOTKEY_SCREENSHOT = 10;
+
+        public const int WS_EX_NOACTIVATE = 0x08000000;
+        public const int WS_EX_TOOLWINDOW = 0x00000080;
+        public const int WM_NCHITTEST = 0x0084;
+        public const int HTCAPTION = 2;
     }
 }

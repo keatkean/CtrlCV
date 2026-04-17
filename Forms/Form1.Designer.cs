@@ -28,6 +28,7 @@
         private System.Windows.Forms.ToolStripMenuItem menuClearAll;
         private System.Windows.Forms.ToolStripMenuItem menuExit;
         private System.Windows.Forms.ToolStripMenuItem menuCheckForUpdates;
+        private System.Windows.Forms.ToolStripMenuItem menuToggleWidget;
 
         private System.Windows.Forms.ContextMenuStrip screenshotMenu;
         private System.Windows.Forms.ToolStripMenuItem menuFullScreen;
@@ -92,6 +93,7 @@
             this.menuClearAll = new System.Windows.Forms.ToolStripMenuItem();
             this.menuExit = new System.Windows.Forms.ToolStripMenuItem();
             this.menuCheckForUpdates = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuToggleWidget = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.contextMenuTray = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -329,6 +331,13 @@
             this.menuCheckForUpdates.Text = "Check for Updates";
             this.menuCheckForUpdates.Click += new System.EventHandler(this.MenuCheckForUpdates_Click);
             // 
+            // menuToggleWidget
+            // 
+            this.menuToggleWidget.Name = "menuToggleWidget";
+            this.menuToggleWidget.Size = new System.Drawing.Size(180, 22);
+            this.menuToggleWidget.Text = "Toggle Widget";
+            this.menuToggleWidget.Click += new System.EventHandler(this.MenuToggleWidget_Click);
+            // 
             // menuClearAll
             // 
             this.menuClearAll.Name = "menuClearAll";
@@ -347,6 +356,7 @@
             // 
             this.contextMenuTray.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.menuShow,
+            this.menuToggleWidget,
             this.menuScreenshot,
             this.menuSettings,
             this.menuCheckForUpdates,

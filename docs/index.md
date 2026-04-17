@@ -79,6 +79,7 @@ When all slots are full, the oldest unpinned item is replaced. Pin important ite
 | **Single instance** | Prevents multiple copies from running |
 | **Start with Windows** | Optional auto-start at login |
 | **Check for updates** | Check for new versions from GitHub Releases and auto-update in place |
+| **Floating widget** | Always-on-top toolbar with slot thumbnails, drag-and-drop, hover preview, compact mode, and auto-hide |
 
 ---
 
@@ -115,6 +116,12 @@ Captured screenshots are stored in the next available slot and placed on the cli
 | Screenshot hotkey modifier | Ctrl+Alt | Modifier for screenshot hotkey |
 | Start minimized | Off | Launch minimized to system tray |
 | Run at Windows startup | Off | Auto-start when you log in |
+| Enable floating widget | Off | Show the floating clipboard toolbar |
+| Compact mode | Off | Use small color-coded circles instead of thumbnails |
+| Widget opacity | 85% | Opacity of the floating widget (20-100%) |
+| Auto-hide | On | Fade the widget when the mouse leaves |
+| Auto-hide delay | 3s | Seconds before the widget fades (1-10) |
+| Widget orientation | Horizontal | Horizontal or vertical layout |
 
 Settings are saved to `%APPDATA%\CtrlCV\settings.json`.
 

@@ -12,6 +12,14 @@ namespace CtrlCV
         private ComboBox cmbScreenshotModifier = null!;
         private CheckBox chkStartMinimized = null!;
         private CheckBox chkRunAtStartup = null!;
+        private CheckBox chkWidgetEnabled = null!;
+        private CheckBox chkWidgetCompact = null!;
+        private TrackBar trkWidgetOpacity = null!;
+        private Label lblOpacityValue = null!;
+        private CheckBox chkWidgetAutoHide = null!;
+        private NumericUpDown nudAutoHideDelay = null!;
+        private ComboBox cmbWidgetOrientation = null!;
+        private Button btnResetPosition = null!;
         private Button btnSave = null!;
         private Button btnCancel = null!;
 
@@ -106,6 +114,91 @@ namespace CtrlCV
             table.Controls.Add(chkRunAtStartup, 0, row);
             row++;
 
+            // Widget section separator
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            var lblWidgetHeader = new Label
+            {
+                Text = "Floating Widget",
+                AutoSize = true,
+                Font = new Font(Font.FontFamily, Font.Size, FontStyle.Bold),
+                Margin = new Padding(3, 12, 3, 4)
+            };
+            table.SetColumnSpan(lblWidgetHeader, 2);
+            table.Controls.Add(lblWidgetHeader, 0, row);
+            row++;
+
+            // Enable widget
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            chkWidgetEnabled = new CheckBox { Text = "Enable floating widget", AutoSize = true, Margin = new Padding(3, 3, 3, 3) };
+            table.SetColumnSpan(chkWidgetEnabled, 2);
+            table.Controls.Add(chkWidgetEnabled, 0, row);
+            row++;
+
+            // Compact mode
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            chkWidgetCompact = new CheckBox { Text = "Compact mode (small circles)", AutoSize = true, Margin = new Padding(3, 3, 3, 3) };
+            table.SetColumnSpan(chkWidgetCompact, 2);
+            table.Controls.Add(chkWidgetCompact, 0, row);
+            row++;
+
+            // Opacity
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            table.Controls.Add(MakeLabel("Opacity:"), 0, row);
+            var opacityPanel = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Dock = DockStyle.Fill };
+            trkWidgetOpacity = new TrackBar
+            {
+                Minimum = 20,
+                Maximum = 100,
+                TickFrequency = 10,
+                SmallChange = 5,
+                LargeChange = 10,
+                Width = 160
+            };
+            trkWidgetOpacity.ValueChanged += (_, _) =>
+            {
+                lblOpacityValue.Text = $"{trkWidgetOpacity.Value}%";
+            };
+            lblOpacityValue = new Label { AutoSize = true, Margin = new Padding(4, 8, 0, 0) };
+            opacityPanel.Controls.Add(trkWidgetOpacity);
+            opacityPanel.Controls.Add(lblOpacityValue);
+            table.Controls.Add(opacityPanel, 1, row);
+            row++;
+
+            // Auto-hide
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            var autoHidePanel = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Dock = DockStyle.Fill };
+            chkWidgetAutoHide = new CheckBox { Text = "Auto-hide after", AutoSize = true, Margin = new Padding(0, 4, 0, 0) };
+            nudAutoHideDelay = new NumericUpDown { Minimum = 1, Maximum = 10, DecimalPlaces = 0, Width = 50 };
+            var lblSeconds = new Label { Text = "seconds", AutoSize = true, Margin = new Padding(4, 8, 0, 0) };
+            autoHidePanel.Controls.Add(chkWidgetAutoHide);
+            autoHidePanel.Controls.Add(nudAutoHideDelay);
+            autoHidePanel.Controls.Add(lblSeconds);
+            table.SetColumnSpan(autoHidePanel, 2);
+            table.Controls.Add(autoHidePanel, 0, row);
+            row++;
+
+            // Orientation
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            table.Controls.Add(MakeLabel("Orientation:"), 0, row);
+            cmbWidgetOrientation = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
+            cmbWidgetOrientation.Items.AddRange(new object[] { "Horizontal", "Vertical" });
+            table.Controls.Add(cmbWidgetOrientation, 1, row);
+            row++;
+
+            // Reset position
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            btnResetPosition = new Button
+            {
+                Text = "Reset Widget Position",
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowOnly,
+                Margin = new Padding(3, 6, 3, 6)
+            };
+            btnResetPosition.Click += BtnResetPosition_Click;
+            table.SetColumnSpan(btnResetPosition, 2);
+            table.Controls.Add(btnResetPosition, 0, row);
+            row++;
+
             // Button row
             table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             var buttonPanel = new FlowLayoutPanel
@@ -155,6 +248,14 @@ namespace CtrlCV
             cmbScreenshotModifier.SelectedIndex = (int)_settings.ScreenshotModifier;
             chkStartMinimized.Checked = _settings.StartMinimized;
             chkRunAtStartup.Checked = _settings.RunAtStartup;
+
+            chkWidgetEnabled.Checked = _settings.WidgetEnabled;
+            chkWidgetCompact.Checked = _settings.WidgetCompactMode;
+            trkWidgetOpacity.Value = (int)(_settings.WidgetOpacity * 100);
+            lblOpacityValue.Text = $"{trkWidgetOpacity.Value}%";
+            chkWidgetAutoHide.Checked = _settings.WidgetAutoHide;
+            nudAutoHideDelay.Value = Math.Clamp(_settings.WidgetAutoHideDelayMs / 1000, 1, 10);
+            cmbWidgetOrientation.SelectedIndex = _settings.WidgetVertical ? 1 : 0;
         }
 
         private void BtnDefaults_Click(object? sender, EventArgs e)
@@ -165,6 +266,24 @@ namespace CtrlCV
             cmbScreenshotModifier.SelectedIndex = (int)defaults.ScreenshotModifier;
             chkStartMinimized.Checked = defaults.StartMinimized;
             chkRunAtStartup.Checked = defaults.RunAtStartup;
+
+            chkWidgetEnabled.Checked = defaults.WidgetEnabled;
+            chkWidgetCompact.Checked = defaults.WidgetCompactMode;
+            trkWidgetOpacity.Value = (int)(defaults.WidgetOpacity * 100);
+            chkWidgetAutoHide.Checked = defaults.WidgetAutoHide;
+            nudAutoHideDelay.Value = defaults.WidgetAutoHideDelayMs / 1000;
+            cmbWidgetOrientation.SelectedIndex = defaults.WidgetVertical ? 1 : 0;
+        }
+
+        private void BtnResetPosition_Click(object? sender, EventArgs e)
+        {
+            _settings.WidgetLeft = -1;
+            _settings.WidgetTop = -1;
+            MessageBox.Show(
+                "Widget position will be reset when the widget is next shown.",
+                "CtrlCV",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
         }
 
         private void BtnSave_Click(object? sender, EventArgs e)
@@ -174,19 +293,37 @@ namespace CtrlCV
             var newScreenshotModifier = (ModifierOption)cmbScreenshotModifier.SelectedIndex;
             var newStartMinimized = chkStartMinimized.Checked;
             var newRunAtStartup = chkRunAtStartup.Checked;
+            var newWidgetEnabled = chkWidgetEnabled.Checked;
+            var newWidgetCompact = chkWidgetCompact.Checked;
+            var newWidgetOpacity = trkWidgetOpacity.Value / 100.0;
+            var newWidgetAutoHide = chkWidgetAutoHide.Checked;
+            var newWidgetAutoHideDelay = (int)nudAutoHideDelay.Value * 1000;
+            var newWidgetVertical = cmbWidgetOrientation.SelectedIndex == 1;
 
             SettingsChanged =
                 newPasteModifier != _settings.PasteModifier ||
                 newMaxSlots != _settings.MaxSlots ||
                 newScreenshotModifier != _settings.ScreenshotModifier ||
                 newStartMinimized != _settings.StartMinimized ||
-                newRunAtStartup != _settings.RunAtStartup;
+                newRunAtStartup != _settings.RunAtStartup ||
+                newWidgetEnabled != _settings.WidgetEnabled ||
+                newWidgetCompact != _settings.WidgetCompactMode ||
+                Math.Abs(newWidgetOpacity - _settings.WidgetOpacity) > 0.01 ||
+                newWidgetAutoHide != _settings.WidgetAutoHide ||
+                newWidgetAutoHideDelay != _settings.WidgetAutoHideDelayMs ||
+                newWidgetVertical != _settings.WidgetVertical;
 
             _settings.PasteModifier = newPasteModifier;
             _settings.MaxSlots = newMaxSlots;
             _settings.ScreenshotModifier = newScreenshotModifier;
             _settings.StartMinimized = newStartMinimized;
             _settings.RunAtStartup = newRunAtStartup;
+            _settings.WidgetEnabled = newWidgetEnabled;
+            _settings.WidgetCompactMode = newWidgetCompact;
+            _settings.WidgetOpacity = newWidgetOpacity;
+            _settings.WidgetAutoHide = newWidgetAutoHide;
+            _settings.WidgetAutoHideDelayMs = newWidgetAutoHideDelay;
+            _settings.WidgetVertical = newWidgetVertical;
 
             try
             {
