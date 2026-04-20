@@ -16,6 +16,7 @@ When all slots are full, the oldest unpinned item is replaced and you're notifie
 - **Pin items** -- pin important items so they aren't replaced when slots are full
 - **Global hotkeys** -- paste from any slot in any application
 - **Screenshot tool** -- full screen, active window, or region selection
+- **Extract text from images (OCR)** -- right-click any image slot to extract text using built-in Windows OCR, or enable automatic extraction after every screenshot
 - **Right-click context menu** -- pin, remove, or clear items directly from the list
 - **Multi-select** -- select multiple items with Ctrl+click or Shift+click, then delete them in one go (or press Delete)
 - **Configurable settings** -- change hotkey modifiers, max slots, startup behavior
@@ -53,6 +54,10 @@ When you press the screenshot hotkey, a context menu appears with three options:
 
 Captured screenshots are stored in the next available slot and placed on the clipboard.
 
+After capturing a screenshot, right-click the image slot and select **Extract Text** to run OCR and copy the recognized text to the clipboard. The extracted text is also stored as a new slot.
+
+To skip the manual step, enable **Auto-extract text from screenshots (OCR)** in Settings. When enabled, every screenshot automatically runs through OCR in the background and the recognized text is added as a new slot and placed on the clipboard (if any text is found). The right-click **Extract Text** option remains available for images that were copied from elsewhere.
+
 ## Settings
 
 Open Settings from the toolbar button or tray right-click menu. Options include:
@@ -64,6 +69,7 @@ Open Settings from the toolbar button or tray right-click menu. Options include:
 | Screenshot hotkey modifier | Ctrl+Alt | Modifier for screenshot hotkey |
 | Start minimized | Off | Launch minimized to system tray |
 | Run at Windows startup | Off | Auto-start when you log in |
+| Auto-extract text from screenshots (OCR) | Off | Run OCR automatically after every screenshot |
 | Enable floating widget | Off | Show the floating clipboard toolbar |
 | Compact mode | Off | Use small color-coded circles instead of thumbnails |
 | Widget opacity | 85% | Opacity of the floating widget (20-100%) |
@@ -151,6 +157,7 @@ CtrlCV/
 - **Elevated apps**: Pasting into applications running as Administrator requires CtrlCV to also run as Administrator (Windows UIPI restriction).
 - **No persistence**: Clipboard slots and pins are stored in memory only and are lost when the app exits.
 - **Text and images only**: Other clipboard formats (files, rich text, etc.) are not captured.
+- **OCR accuracy**: Text extraction uses the built-in Windows OCR engine. Accuracy depends on image quality and installed Windows language packs.
 
 ## License
 

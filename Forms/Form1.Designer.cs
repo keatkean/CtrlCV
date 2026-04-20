@@ -43,6 +43,7 @@
 
         private System.Windows.Forms.ContextMenuStrip contextMenuSlot;
         private System.Windows.Forms.ToolStripMenuItem menuSlotPin;
+        private System.Windows.Forms.ToolStripMenuItem menuSlotExtractText;
         private System.Windows.Forms.ToolStripMenuItem menuSlotRemove;
         private System.Windows.Forms.ToolStripMenuItem menuSlotClearAll;
 
@@ -132,6 +133,13 @@
             this.menuSlotPin.Text = "Pin";
             this.menuSlotPin.Click += new System.EventHandler(this.MenuSlotPin_Click);
             // 
+            // menuSlotExtractText
+            // 
+            this.menuSlotExtractText = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuSlotExtractText.Name = "menuSlotExtractText";
+            this.menuSlotExtractText.Text = "Extract Text";
+            this.menuSlotExtractText.Click += new System.EventHandler(this.MenuSlotExtractText_Click);
+            // 
             // menuSlotRemove
             // 
             this.menuSlotRemove = new System.Windows.Forms.ToolStripMenuItem();
@@ -152,6 +160,7 @@
             this.contextMenuSlot = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.contextMenuSlot.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.menuSlotPin,
+            this.menuSlotExtractText,
             this.menuSlotRemove,
             this.menuSlotClearAll});
             this.contextMenuSlot.Name = "contextMenuSlot";

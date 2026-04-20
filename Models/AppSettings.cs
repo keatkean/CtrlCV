@@ -16,6 +16,7 @@ namespace CtrlCV
         public ModifierOption ScreenshotModifier { get; set; } = ModifierOption.CtrlAlt;
         public bool StartMinimized { get; set; } = false;
         public bool RunAtStartup { get; set; } = false;
+        public bool AutoExtractTextFromScreenshots { get; set; } = false;
 
         public bool WidgetEnabled { get; set; } = false;
         public bool WidgetCompactMode { get; set; } = false;

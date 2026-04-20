@@ -33,7 +33,7 @@ namespace CtrlCV
 
             try
             {
-                NativeMethods.SetProcessDPIAware();
+                Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
 
                 Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
                 Application.ThreadException += OnThreadException;
