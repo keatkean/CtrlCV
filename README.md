@@ -101,12 +101,12 @@ To create a self-contained single-file EXE that runs on any Windows x64 machine 
 dotnet publish -p:PublishProfile=SingleFileExe
 ```
 
-The output is a single `CtrlCV.exe` in `bin\Publish\`. Copy it to any Windows 10+ (x64) machine and run -- no installation or runtime required.
+The output is a single `CtrlCV.exe` in `bin\Publish\` (~75 MB). Copy it to any Windows 10+ (x64) machine and run -- no installation or runtime required. The bundle is Brotli-compressed; the first launch extracts native libraries to `%LOCALAPPDATA%\Temp\.net\CtrlCV\` and caches them for subsequent runs.
 
 To publish manually without the profile:
 
 ```bash
-dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true
 ```
 
 ## Project Structure
