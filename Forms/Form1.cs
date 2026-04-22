@@ -605,7 +605,11 @@ namespace CtrlCV
 
                 UpdateChecker.ApplyUpdateAndRestart(updateFilePath, currentExePath);
                 _isExiting = true;
-                notifyIcon.Visible = false;
+
+                // Dispose auxiliary forms (widget, etc.) BEFORE Application.Exit() to avoid
+                // "Collection was modified" when Application.Exit enumerates OpenForms.
+                CleanupResources();
+
                 Application.Exit();
             }
             catch (Exception ex)

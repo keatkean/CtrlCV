@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.3.1
+
+### Fixed
+
+- **"Check for Updates" crashed with `Collection was modified` after a successful download.** `Application.Exit()` enumerates `Application.OpenForms`, and disposing the floating widget mid-enumeration mutated that list. The update-and-restart path now disposes auxiliary forms via `CleanupResources()` before exiting, matching the *Exit* menu behavior.
+
 ## v1.3.0
 
 ### New
