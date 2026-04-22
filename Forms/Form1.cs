@@ -113,6 +113,7 @@ namespace CtrlCV
 
             _widget = new FloatingWidgetForm(_clipboardManager, _pasteService, _settings);
             _widget.Owner = this;
+            _widget.NotificationRequested += ShowTrayNotification;
             _widget.Show();
         }
 

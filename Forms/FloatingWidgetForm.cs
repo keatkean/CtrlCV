@@ -5,6 +5,8 @@ namespace CtrlCV
 {
     internal class FloatingWidgetForm : Form
     {
+        public event Action<string, string>? NotificationRequested;
+
         private const int RefreshDebounceMs = 50;
 
         private int GripSize => Scale(6);
@@ -532,21 +534,34 @@ namespace CtrlCV
             catch (Exception ex)
             {
                 Form1.LogError("OCR extraction error (widget)", ex);
+                NotificationRequested?.Invoke("OCR failed", "An error occurred while extracting text from the image.");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(text))
+            {
+                NotificationRequested?.Invoke("No text found", "OCR did not detect any text in this image.");
                 return;
+            }
 
             _clipboardManager.SetSuppressMonitoring(true);
             try
             {
                 _clipboardManager.AddSlot(new ClipboardItem(text));
                 ClipboardManager.ClipboardRetry(() => { Clipboard.SetText(text); return true; });
+                NotificationRequested?.Invoke(
+                    "Text extracted",
+                    text.Length > 80 ? text[..80] + "..." : text);
             }
             finally
             {
-                _clipboardManager.SetSuppressMonitoring(false);
+                // Defer suppress release so WM_CLIPBOARDUPDATE can be dispatched
+                // and ignored before monitoring resumes. Releasing synchronously
+                // here caused the OCR result to be added as a duplicate slot.
+                if (IsHandleCreated && !IsDisposed)
+                    BeginInvoke(() => _clipboardManager.SetSuppressMonitoring(false));
+                else
+                    _clipboardManager.SetSuppressMonitoring(false);
             }
         }
 

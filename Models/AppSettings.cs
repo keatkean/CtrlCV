@@ -142,6 +142,7 @@ namespace CtrlCV
             ScreenshotModifier = defaults.ScreenshotModifier;
             StartMinimized = defaults.StartMinimized;
             RunAtStartup = defaults.RunAtStartup;
+            AutoExtractTextFromScreenshots = defaults.AutoExtractTextFromScreenshots;
             WidgetEnabled = defaults.WidgetEnabled;
             WidgetCompactMode = defaults.WidgetCompactMode;
             WidgetOpacity = defaults.WidgetOpacity;
