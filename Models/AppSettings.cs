@@ -26,16 +26,23 @@ namespace CtrlCV
         public int WidgetTop { get; set; } = -1;
         public bool WidgetVertical { get; set; } = false;
 
-        private static readonly string SettingsDir = Path.Combine(
+        internal static readonly string SettingsDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "CtrlCV");
 
-        private static readonly string SettingsPath = Path.Combine(SettingsDir, "settings.json");
+        private static readonly string LegacySettingsPath = Path.Combine(SettingsDir, "settings.json");
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
             WriteIndented = true
         };
+
+        private static CtrlCvStore? _store;
+
+        internal static void AttachStore(CtrlCvStore store)
+        {
+            _store = store;
+        }
 
         public uint GetPasteModifierFlags()
         {
@@ -79,11 +86,14 @@ namespace CtrlCV
 
         public static AppSettings Load()
         {
+            if (_store != null)
+                return _store.LoadSettings();
+
             try
             {
-                if (File.Exists(SettingsPath))
+                if (File.Exists(LegacySettingsPath))
                 {
-                    var json = File.ReadAllText(SettingsPath);
+                    var json = File.ReadAllText(LegacySettingsPath);
                     var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions);
                     if (settings != null)
                     {
@@ -104,17 +114,41 @@ namespace CtrlCV
 
         public void Save()
         {
+            if (_store != null)
+            {
+                _store.MarkSettingsDirty(this);
+                return;
+            }
+
             try
             {
                 Directory.CreateDirectory(SettingsDir);
                 var json = JsonSerializer.Serialize(this, JsonOptions);
-                File.WriteAllText(SettingsPath, json);
+                File.WriteAllText(LegacySettingsPath, json);
             }
             catch (Exception ex)
             {
                 Form1.LogError("Failed to save settings", ex);
                 throw;
             }
+        }
+
+        public void ResetToDefaults()
+        {
+            var defaults = new AppSettings();
+            PasteModifier = defaults.PasteModifier;
+            MaxSlots = defaults.MaxSlots;
+            ScreenshotModifier = defaults.ScreenshotModifier;
+            StartMinimized = defaults.StartMinimized;
+            RunAtStartup = defaults.RunAtStartup;
+            WidgetEnabled = defaults.WidgetEnabled;
+            WidgetCompactMode = defaults.WidgetCompactMode;
+            WidgetOpacity = defaults.WidgetOpacity;
+            WidgetAutoHide = defaults.WidgetAutoHide;
+            WidgetAutoHideDelayMs = defaults.WidgetAutoHideDelayMs;
+            WidgetLeft = defaults.WidgetLeft;
+            WidgetTop = defaults.WidgetTop;
+            WidgetVertical = defaults.WidgetVertical;
         }
     }
 }

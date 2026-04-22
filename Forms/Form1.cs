@@ -7,14 +7,19 @@ namespace CtrlCV
     public partial class Form1 : Form
     {
         private AppSettings _settings;
+        private CtrlCvStore _store = null!;
         private ClipboardManager _clipboardManager = null!;
         private HotkeyManager _hotkeyManager = null!;
         private PasteService _pasteService = null!;
         private FloatingWidgetForm? _widget;
         private bool _isExiting;
+        private readonly Queue<(string Title, string Message)> _pendingEarlyNotifications = new();
 
         public Form1()
         {
+            _store = new CtrlCvStore(AppSettings.SettingsDir);
+            _store.NotificationRequested += OnEarlyStoreNotification;
+            AppSettings.AttachStore(_store);
             _settings = AppSettings.Load();
             InitializeComponent();
             LoadAppIcon();
@@ -22,6 +27,10 @@ namespace CtrlCV
             Load += Form1_Load;
             FormClosing += Form1_FormClosing;
             listViewSlots.Resize += (_, _) => AutoSizeColumns();
+
+            var tip = new ToolTip { AutoPopDelay = 6000, InitialDelay = 500, ReshowDelay = 200 };
+            tip.SetToolTip(btnClearAll, "Removes all unpinned items. Pinned items are kept.\nTo delete a pinned item, right-click it \u2192 Remove.");
+            tip.SetToolTip(btnRemoveSelected, "Removes the currently selected item (works for both pinned and unpinned).");
         }
 
         private void LoadAppIcon()
@@ -49,9 +58,19 @@ namespace CtrlCV
             Text = $"CtrlCV - Clipboard Manager v{versionStr}";
             notifyIcon.Text = $"CtrlCV v{versionStr}";
 
-            _clipboardManager = new ClipboardManager(Handle, _settings);
+            _store.NotificationRequested -= OnEarlyStoreNotification;
+
+            _clipboardManager = new ClipboardManager(Handle, _settings, _store);
             _clipboardManager.SlotsChanged += OnSlotsChanged;
             _clipboardManager.NotificationRequested += ShowTrayNotification;
+
+            while (_pendingEarlyNotifications.Count > 0)
+            {
+                var n = _pendingEarlyNotifications.Dequeue();
+                ShowTrayNotification(n.Title, n.Message);
+            }
+
+            _clipboardManager.NotifyChanged();
 
             if (!_clipboardManager.StartListening())
             {
@@ -278,7 +297,7 @@ namespace CtrlCV
 
                     if (slot.ItemType == ClipboardItemType.Image)
                     {
-                        var thumb = slot.CreateThumbnail(32, 32);
+                        using var thumb = slot.CreateThumbnail(32, 32);
                         if (thumb != null)
                         {
                             imageListThumbs.Images.Add(thumb);
@@ -356,10 +375,8 @@ namespace CtrlCV
             foreach (int idx in listViewSlots.SelectedIndices)
             {
                 if (idx < slots.Count)
-                    slots[idx].IsPinned = anyUnpinned;
+                    _clipboardManager.SetPinned(idx, anyUnpinned);
             }
-
-            _clipboardManager.NotifyChanged();
         }
 
         private void ContextMenuSlot_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
@@ -418,7 +435,7 @@ namespace CtrlCV
         private void OpenSettings()
         {
             bool wasWidgetEnabled = _settings.WidgetEnabled;
-            using var form = new SettingsForm(_settings);
+            using var form = new SettingsForm(_settings, ForgetPersistedPins, ResetSettingsToDefaults);
             if (form.ShowDialog(this) == DialogResult.OK && form.SettingsChanged)
             {
                 _hotkeyManager.UnregisterAll();
@@ -597,6 +614,7 @@ namespace CtrlCV
                 _widget = null;
                 _hotkeyManager?.Dispose();
                 _clipboardManager?.Dispose();
+                _store?.Dispose();
                 notifyIcon.Visible = false;
             }
             catch (Exception ex)
@@ -608,6 +626,23 @@ namespace CtrlCV
         #endregion
 
         #region Notifications and Logging
+
+        private void OnEarlyStoreNotification(string title, string message)
+        {
+            _pendingEarlyNotifications.Enqueue((title, message));
+        }
+
+        internal void ForgetPersistedPins()
+        {
+            _clipboardManager?.ForgetPersistedPins();
+        }
+
+        internal void ResetSettingsToDefaults()
+        {
+            _settings.ResetToDefaults();
+            _store?.MarkSettingsDirty(_settings);
+            StartupRegistry.TrySet(_settings.RunAtStartup, out _);
+        }
 
         private void ShowTrayNotification(string title, string message)
         {

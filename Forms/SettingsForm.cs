@@ -1,10 +1,10 @@
-using Microsoft.Win32;
-
 namespace CtrlCV
 {
     internal class SettingsForm : Form
     {
         private readonly AppSettings _settings;
+        private readonly Action? _forgetPersistedPins;
+        private readonly Action? _resetSettingsToDefaults;
         public bool SettingsChanged { get; private set; }
 
         private ComboBox cmbPasteModifier = null!;
@@ -23,9 +23,11 @@ namespace CtrlCV
         private Button btnSave = null!;
         private Button btnCancel = null!;
 
-        public SettingsForm(AppSettings settings)
+        public SettingsForm(AppSettings settings, Action? forgetPersistedPins = null, Action? resetSettingsToDefaults = null)
         {
             _settings = settings;
+            _forgetPersistedPins = forgetPersistedPins;
+            _resetSettingsToDefaults = resetSettingsToDefaults;
             InitializeSettingsUI();
             LoadAppIcon();
             LoadCurrentValues();
@@ -199,6 +201,61 @@ namespace CtrlCV
             table.Controls.Add(btnResetPosition, 0, row);
             row++;
 
+            // Persistence section
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            var lblPersistenceHeader = new Label
+            {
+                Text = "Persistence",
+                AutoSize = true,
+                Font = new Font(Font.FontFamily, Font.Size, FontStyle.Bold),
+                Margin = new Padding(3, 12, 3, 4)
+            };
+            table.SetColumnSpan(lblPersistenceHeader, 2);
+            table.Controls.Add(lblPersistenceHeader, 0, row);
+            row++;
+
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            var lblPersistenceHint = new Label
+            {
+                Text = "Pinned items and these settings are saved unencrypted in\n%APPDATA%\\CtrlCV\\CtrlCV.db. Don't pin secrets.",
+                AutoSize = true,
+                ForeColor = SystemColors.GrayText,
+                Margin = new Padding(3, 0, 3, 6)
+            };
+            table.SetColumnSpan(lblPersistenceHint, 2);
+            table.Controls.Add(lblPersistenceHint, 0, row);
+            row++;
+
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            var persistenceButtons = new FlowLayoutPanel
+            {
+                AutoSize = true,
+                WrapContents = false,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0, 0, 0, 6)
+            };
+            var btnForgetPins = new Button
+            {
+                Text = "Forget Persisted Pins",
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowOnly,
+                Margin = new Padding(3, 0, 8, 0)
+            };
+            btnForgetPins.Click += BtnForgetPins_Click;
+            var btnResetSettings = new Button
+            {
+                Text = "Reset Settings",
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowOnly,
+                Margin = new Padding(0, 0, 3, 0)
+            };
+            btnResetSettings.Click += BtnResetSettings_Click;
+            persistenceButtons.Controls.Add(btnForgetPins);
+            persistenceButtons.Controls.Add(btnResetSettings);
+            table.SetColumnSpan(persistenceButtons, 2);
+            table.Controls.Add(persistenceButtons, 0, row);
+            row++;
+
             // Button row
             table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             var buttonPanel = new FlowLayoutPanel
@@ -286,6 +343,76 @@ namespace CtrlCV
                 MessageBoxIcon.Information);
         }
 
+        private void BtnResetSettings_Click(object? sender, EventArgs e)
+        {
+            if (_resetSettingsToDefaults == null)
+                return;
+
+            var confirm = MessageBox.Show(
+                "This will reset every setting to its default value and save it immediately.\n" +
+                "The settings dialog will close.\n\n" +
+                "Continue?",
+                "CtrlCV - Reset Settings",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (confirm != DialogResult.Yes)
+                return;
+
+            try
+            {
+                _resetSettingsToDefaults();
+                SettingsChanged = true;
+                DialogResult = DialogResult.OK;
+                Close();
+            }
+            catch (Exception ex)
+            {
+                Form1.LogError("Reset Settings failed", ex);
+                MessageBox.Show(
+                    $"Failed to reset settings:\n\n{ex.Message}",
+                    "CtrlCV - Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private void BtnForgetPins_Click(object? sender, EventArgs e)
+        {
+            if (_forgetPersistedPins == null)
+                return;
+
+            var confirm = MessageBox.Show(
+                "This will permanently delete every pinned item stored on disk and unpin them in memory.\n" +
+                "Unpinned items will remain in the list until they age out of the clipboard history.\n\n" +
+                "Continue?",
+                "CtrlCV - Forget Persisted Pins",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (confirm != DialogResult.Yes)
+                return;
+
+            try
+            {
+                _forgetPersistedPins();
+                MessageBox.Show(
+                    "Persisted pins were wiped.",
+                    "CtrlCV",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                Form1.LogError("Forget Persisted Pins failed", ex);
+                MessageBox.Show(
+                    $"Failed to wipe persisted pins:\n\n{ex.Message}",
+                    "CtrlCV - Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
         private void BtnSave_Click(object? sender, EventArgs e)
         {
             var newPasteModifier = (ModifierOption)cmbPasteModifier.SelectedIndex;
@@ -344,30 +471,10 @@ namespace CtrlCV
 
         private static void SetRunAtStartup(bool enabled)
         {
-            const string keyName = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
-            const string valueName = "CtrlCV";
-
-            try
+            if (!StartupRegistry.TrySet(enabled, out var error) && error != null)
             {
-                using var key = Registry.CurrentUser.OpenSubKey(keyName, writable: true);
-                if (key == null) return;
-
-                if (enabled)
-                {
-                    var exePath = Application.ExecutablePath;
-                    key.SetValue(valueName, $"\"{exePath}\"");
-                }
-                else
-                {
-                    if (key.GetValue(valueName) != null)
-                        key.DeleteValue(valueName, throwOnMissingValue: false);
-                }
-            }
-            catch (Exception ex)
-            {
-                Form1.LogError("Failed to set startup registry", ex);
                 MessageBox.Show(
-                    $"Could not update Windows startup setting:\n\n{ex.Message}",
+                    $"Could not update Windows startup setting:\n\n{error}",
                     "CtrlCV - Warning",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);

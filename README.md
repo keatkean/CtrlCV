@@ -14,6 +14,7 @@ When all slots are full, the oldest unpinned item is replaced and you're notifie
 
 - **Multi-slot clipboard** -- stores up to 10 text and image items with FIFO rotation
 - **Pin items** -- pin important items so they aren't replaced when slots are full
+- **Pinned persistence** -- pinned items and settings survive restarts (stored locally via LiteDB)
 - **Global hotkeys** -- paste from any slot in any application
 - **Screenshot tool** -- full screen, active window, or region selection
 - **Right-click context menu** -- pin, remove, or clear items directly from the list
@@ -71,7 +72,22 @@ Open Settings from the toolbar button or tray right-click menu. Options include:
 | Auto-hide delay | 3s | Seconds before the widget fades (1-10) |
 | Widget orientation | Horizontal | Horizontal or vertical layout |
 
-Settings are saved to `%APPDATA%\CtrlCV\settings.json`.
+Settings and pinned items are saved to `%APPDATA%\CtrlCV\CtrlCV.db` (a LiteDB file). A one-time migration moves any existing `settings.json` into the DB and renames the old file to `settings.json.migrated-<timestamp>` for rollback.
+
+## Persistence
+
+- **Pinned items survive restart.** Text and images you pin are written to `%APPDATA%\CtrlCV\CtrlCV.db` on change (debounced) and rehydrated on the next launch.
+- **Unpinned items are session-only.** The regular clipboard history is kept only in memory and is lost when the app exits -- pin anything you want to keep.
+- **Large images are handled.** Images up to 32 MB are persisted. Small images (< 1 MB PNG) are embedded in the document; larger images go into LiteDB's GridFS bucket so the main document stays compact.
+- **Text cap.** Pinned text longer than 5 MB is kept in memory for the session but not saved to disk.
+- **Clear All keeps pinned items.** The *Clear All* button and menu only remove unpinned items; pinned items (and their on-disk copy) are preserved. To delete a pinned item, right-click it and choose *Remove*.
+- **Wipe on demand.** *Settings -> Forget Persisted Pins* deletes every pinned item stored on disk in one click.
+
+### Security warning
+
+The database is **not encrypted**. Pinned items and settings are stored in plaintext inside your user profile (`%APPDATA%\CtrlCV\CtrlCV.db`). Any process running as your Windows user -- including malware or other apps under the same account -- can read this file. A user with administrator rights can read it across user profiles. Backup and sync tools (OneDrive Known Folder Move, roaming profiles, imaging software) will copy the file in plaintext.
+
+**Do not pin passwords, tokens, private images, or any other confidential data.** Use *Settings -> Forget Persisted Pins* to wipe the on-disk copy.
 
 ## Requirements
 
@@ -123,13 +139,15 @@ CtrlCV/
 │   ├── Logo.ico                  # App icon (multi-size)
 │   └── Logo.png                  # Source logo
 ├── Models/
-│   ├── AppSettings.cs            # Settings model, JSON persistence
-│   └── ClipboardItem.cs          # Text/image clipboard slot with IDisposable
+│   ├── AppSettings.cs            # Settings model, routed through CtrlCvStore
+│   ├── ClipboardItem.cs          # Text/image clipboard slot with IDisposable
+│   └── PersistedClipboardItem.cs # LiteDB DTO for persisted pinned items
 ├── Properties/
 │   └── PublishProfiles/
 │       └── SingleFileExe.pubxml
 ├── Services/
-│   ├── ClipboardManager.cs       # Clipboard monitoring, slot storage, eviction
+│   ├── ClipboardManager.cs       # Clipboard monitoring, slot storage, eviction, pinned persistence hooks
+│   ├── CtrlCvStore.cs            # LiteDB wrapper: pinned items + settings, debounced writes, GridFS, corruption recovery
 │   ├── HotkeyManager.cs         # Global hotkey registration and dispatch
 │   └── PasteService.cs           # Clipboard paste simulation (set + Ctrl+V)
 ├── CtrlCV.csproj                 # Project file (.NET 8 WinForms)
@@ -149,7 +167,8 @@ CtrlCV/
 
 - **Hotkey conflicts**: Global hotkeys may override shortcuts in other apps (e.g., browser tab switching). Change the modifier in Settings to avoid conflicts.
 - **Elevated apps**: Pasting into applications running as Administrator requires CtrlCV to also run as Administrator (Windows UIPI restriction).
-- **No persistence**: Clipboard slots and pins are stored in memory only and are lost when the app exits.
+- **Only pinned items persist**: Unpinned clipboard items are session-only and are lost when the app exits. Pin anything you want to keep.
+- **Unencrypted DB**: See the *Security warning* above -- don't pin secrets.
 - **Text and images only**: Other clipboard formats (files, rich text, etc.) are not captured.
 
 ## License

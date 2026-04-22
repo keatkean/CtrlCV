@@ -71,6 +71,7 @@ namespace CtrlCV
             _refreshDebounceTimer.Tick += RefreshDebounceTimer_Tick;
 
             ApplySettings();
+            RebuildThumbnailCache();
             CalculateAndResize();
             RestorePosition();
         }
@@ -91,6 +92,10 @@ namespace CtrlCV
 
         public void RefreshSlots()
         {
+            _previewPopup.HidePreview();
+            _hoveredSlotIndex = -1;
+            _hoverTimer.Stop();
+
             if (_refreshPending)
                 return;
             _refreshPending = true;

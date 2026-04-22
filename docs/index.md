@@ -37,6 +37,15 @@ title: CtrlCV - Multi-Slot Clipboard Manager
   background: #f6f8fa;
   border-radius: 10px;
 }
+.warning-box {
+  margin: 24px 0;
+  padding: 16px 20px;
+  background: #fff8e1;
+  border-left: 4px solid #f4a100;
+  border-radius: 6px;
+  color: #4a3a00;
+}
+.warning-box strong { color: #7a5b00; }
 </style>
 
 # Multi-Slot Clipboard Manager for Windows
@@ -80,6 +89,7 @@ When all slots are full, the oldest unpinned item is replaced. Pin important ite
 | **Start with Windows** | Optional auto-start at login |
 | **Check for updates** | Check for new versions from GitHub Releases and auto-update in place |
 | **Floating widget** | Always-on-top toolbar with slot thumbnails, drag-and-drop, hover preview, compact mode, and auto-hide |
+| **Pinned persistence** | Pinned items and settings survive restarts, stored locally via LiteDB (large images via GridFS) |
 
 ---
 
@@ -123,7 +133,24 @@ Captured screenshots are stored in the next available slot and placed on the cli
 | Auto-hide delay | 3s | Seconds before the widget fades (1-10) |
 | Widget orientation | Horizontal | Horizontal or vertical layout |
 
-Settings are saved to `%APPDATA%\CtrlCV\settings.json`.
+Settings and pinned items are saved to `%APPDATA%\CtrlCV\CtrlCV.db` (a LiteDB file). A one-time migration moves any existing `settings.json` into the DB and renames the old file to `settings.json.migrated-<timestamp>`.
+
+---
+
+## Persistence
+
+- **Pinned items survive restart.** Text and images you pin are written to `%APPDATA%\CtrlCV\CtrlCV.db` on change (debounced) and rehydrated on the next launch.
+- **Unpinned items are session-only.** The regular clipboard history stays in memory and is cleared when the app exits -- pin anything you want to keep.
+- **Large images are handled.** Images up to 32 MB are persisted. Small images (< 1 MB PNG) are embedded in the document; larger images go into LiteDB's GridFS bucket so the main document stays compact.
+- **Text cap.** Pinned text over 5 MB stays in memory for the session but is not saved to disk.
+- **Clear All keeps pinned items.** The *Clear All* button and menu only remove unpinned items; pinned items (and their on-disk copy) are preserved. To delete a pinned item, right-click it and choose *Remove*.
+- **Wipe on demand.** *Settings -> Forget Persisted Pins* deletes every pinned item stored on disk in one click.
+
+<div class="warning-box">
+  <strong>Security note:</strong> The database is <em>not</em> encrypted. Pinned items and settings are stored in plaintext inside your user profile. Any process running as your Windows user -- including malware or other apps under the same account -- can read this file. Backup and sync tools (OneDrive Known Folder Move, roaming profiles, imaging software) will copy it in plaintext.
+  <br><br>
+  <strong>Do not pin passwords, tokens, private images, or any other confidential data.</strong> Use <em>Settings -> Forget Persisted Pins</em> to wipe the on-disk copy.
+</div>
 
 ---
 
@@ -157,7 +184,8 @@ The output is a single `CtrlCV.exe` in `bin\Publish\`. Copy it to any Windows 10
 
 - **Hotkey conflicts** -- Global hotkeys may override shortcuts in other apps. Change the modifier in Settings to avoid conflicts.
 - **Elevated apps** -- Pasting into apps running as Administrator requires CtrlCV to also run as Administrator.
-- **No persistence** -- Clipboard slots are stored in memory only and are lost when the app exits.
+- **Only pinned items persist** -- Unpinned clipboard history is session-only and is lost when the app exits. Pin items you want to keep.
+- **Unencrypted DB** -- See the *Security note* above: don't pin secrets.
 - **Text and images only** -- Other clipboard formats (files, rich text, etc.) are not captured.
 
 ---
