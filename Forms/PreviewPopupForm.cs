@@ -4,10 +4,12 @@ namespace CtrlCV
 {
     internal class PreviewPopupForm : Form
     {
-        private const int MaxWidth = 400;
-        private const int MaxTextHeight = 300;
-        private const int MaxImageHeight = 400;
-        private const int ContentPadding = 8;
+        private int MaxWidth => Scale(400);
+        private int MaxTextHeight => Scale(300);
+        private int MaxImageHeight => Scale(400);
+        private int ContentPadding => Scale(8);
+
+        private int Scale(int baseValue) => (int)Math.Round(baseValue * DeviceDpi / 96.0);
 
         private readonly RichTextBox _textBox;
         private readonly PictureBox _pictureBox;
@@ -96,7 +98,7 @@ namespace CtrlCV
             int width = MaxWidth;
 
             if (textSize.Width < contentWidth * 0.6f && textSize.Height < MaxTextHeight * 0.3f)
-                width = Math.Max((int)textSize.Width + ContentPadding * 2 + 20, 150);
+                width = Math.Max((int)textSize.Width + ContentPadding * 2 + Scale(20), Scale(150));
 
             Size = new Size(width, height);
             _textBox.SetBounds(ContentPadding, ContentPadding, width - ContentPadding * 2, height - ContentPadding * 2);
@@ -129,10 +131,11 @@ namespace CtrlCV
             int spaceAbove = anchor.Top - screen.Top;
             int spaceBelow = screen.Bottom - anchor.Bottom;
 
-            if (spaceAbove >= Height + 4 || spaceAbove >= spaceBelow)
-                y = anchor.Top - Height - 4;
+            int gap = Scale(4);
+            if (spaceAbove >= Height + gap || spaceAbove >= spaceBelow)
+                y = anchor.Top - Height - gap;
             else
-                y = anchor.Bottom + 4;
+                y = anchor.Bottom + gap;
 
             x = Math.Max(screen.Left, Math.Min(x, screen.Right - Width));
             y = Math.Max(screen.Top, Math.Min(y, screen.Bottom - Height));

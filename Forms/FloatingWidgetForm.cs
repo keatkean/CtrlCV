@@ -5,12 +5,15 @@ namespace CtrlCV
 {
     internal class FloatingWidgetForm : Form
     {
-        private const int GripSize = 6;
-        private const int NormalCellSize = 48;
-        private const int CompactCellSize = 24;
-        private const int CellMargin = 2;
-        private const int DragDeadZone = 4;
         private const int RefreshDebounceMs = 50;
+
+        private int GripSize => Scale(6);
+        private int NormalCellSize => Scale(48);
+        private int CompactCellSize => Scale(24);
+        private int CellMargin => Scale(2);
+        private int DragDeadZone => Scale(4);
+
+        private int Scale(int baseValue) => (int)Math.Round(baseValue * DeviceDpi / 96.0);
 
         private static readonly Color TextSlotColor = Color.FromArgb(60, 120, 200);
         private static readonly Color ImageSlotColor = Color.FromArgb(60, 170, 80);
@@ -35,6 +38,9 @@ namespace CtrlCV
         private bool _refreshPending;
         private double _targetOpacity;
         private bool _isFadingOut;
+
+        private readonly ContextMenuStrip _slotContextMenu;
+        private int _contextMenuSlotIndex = -1;
 
         private readonly StringFormat _centerFormat = new()
         {
@@ -69,6 +75,12 @@ namespace CtrlCV
 
             _refreshDebounceTimer = new System.Windows.Forms.Timer { Interval = RefreshDebounceMs };
             _refreshDebounceTimer.Tick += RefreshDebounceTimer_Tick;
+
+            var menuExtractText = new ToolStripMenuItem("Extract Text");
+            menuExtractText.Click += MenuWidgetExtractText_Click;
+            _slotContextMenu = new ContextMenuStrip();
+            _slotContextMenu.Items.Add(menuExtractText);
+            _slotContextMenu.Opening += SlotContextMenu_Opening;
 
             ApplySettings();
             RebuildThumbnailCache();
@@ -159,19 +171,23 @@ namespace CtrlCV
             g.FillRectangle(brush, gripRect);
 
             using var dotBrush = new SolidBrush(Color.FromArgb(120, 120, 125));
+            int dotSize = Scale(3);
+            int dotGap = Scale(6);
             if (vertical)
             {
                 int cx = Width / 2;
-                g.FillEllipse(dotBrush, cx - 6, 2, 3, 3);
-                g.FillEllipse(dotBrush, cx, 2, 3, 3);
-                g.FillEllipse(dotBrush, cx + 6, 2, 3, 3);
+                int dy = Scale(2);
+                g.FillEllipse(dotBrush, cx - dotGap, dy, dotSize, dotSize);
+                g.FillEllipse(dotBrush, cx, dy, dotSize, dotSize);
+                g.FillEllipse(dotBrush, cx + dotGap, dy, dotSize, dotSize);
             }
             else
             {
                 int cy = Height / 2;
-                g.FillEllipse(dotBrush, 2, cy - 6, 3, 3);
-                g.FillEllipse(dotBrush, 2, cy, 3, 3);
-                g.FillEllipse(dotBrush, 2, cy + 6, 3, 3);
+                int dx = Scale(2);
+                g.FillEllipse(dotBrush, dx, cy - dotGap, dotSize, dotSize);
+                g.FillEllipse(dotBrush, dx, cy, dotSize, dotSize);
+                g.FillEllipse(dotBrush, dx, cy + dotGap, dotSize, dotSize);
             }
         }
 
@@ -267,7 +283,7 @@ namespace CtrlCV
 
             if (slots.Count == 0)
             {
-                int emptyLen = Math.Max(cellSize * 2, 60) + CellMargin * 2;
+                int emptyLen = Math.Max(cellSize * 2, Scale(60)) + CellMargin * 2;
                 if (vertical)
                     Size = new Size(cellSize + CellMargin * 2, GripSize + emptyLen);
                 else
@@ -329,7 +345,7 @@ namespace CtrlCV
             foreach (var screen in Screen.AllScreens)
             {
                 var overlap = Rectangle.Intersect(testRect, screen.WorkingArea);
-                if (overlap.Width >= 20 && overlap.Height >= 20)
+                if (overlap.Width >= Scale(20) && overlap.Height >= Scale(20))
                     return true;
             }
             return false;
@@ -340,7 +356,7 @@ namespace CtrlCV
             var wa = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1920, 1080);
             Location = new Point(
                 wa.Left + (wa.Width - Width) / 2,
-                wa.Bottom - Height - 60);
+                wa.Bottom - Height - Scale(60));
         }
 
         private void SavePosition()
@@ -374,6 +390,15 @@ namespace CtrlCV
                 if (slotIndex >= 0 && IsWithinDeadZone(e.Location, _mouseDownPoint))
                 {
                     _ = _pasteService.PasteFromSlotAsync(slotIndex);
+                }
+            }
+            else if (e.Button == MouseButtons.Right)
+            {
+                int slotIndex = HitTestSlot(e.Location);
+                if (slotIndex >= 0)
+                {
+                    _contextMenuSlotIndex = slotIndex;
+                    _slotContextMenu.Show(this, e.Location);
                 }
             }
             base.OnMouseUp(e);
@@ -430,7 +455,7 @@ namespace CtrlCV
             base.OnMouseEnter(e);
         }
 
-        private static bool IsWithinDeadZone(Point a, Point b)
+        private bool IsWithinDeadZone(Point a, Point b)
         {
             return Math.Abs(a.X - b.X) < DragDeadZone && Math.Abs(a.Y - b.Y) < DragDeadZone;
         }
@@ -469,6 +494,55 @@ namespace CtrlCV
             catch (ExternalException ex)
             {
                 Form1.LogError("Drag-and-drop error", ex);
+            }
+            finally
+            {
+                _clipboardManager.SetSuppressMonitoring(false);
+            }
+        }
+
+        #endregion
+
+        #region Context Menu
+
+        private void SlotContextMenu_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            var slots = _clipboardManager.Slots;
+            bool canExtract = _contextMenuSlotIndex >= 0
+                && _contextMenuSlotIndex < slots.Count
+                && slots[_contextMenuSlotIndex].ItemType == ClipboardItemType.Image;
+            _slotContextMenu.Items[0].Enabled = canExtract;
+        }
+
+        private async void MenuWidgetExtractText_Click(object? sender, EventArgs e)
+        {
+            var slots = _clipboardManager.Slots;
+            if (_contextMenuSlotIndex < 0 || _contextMenuSlotIndex >= slots.Count)
+                return;
+
+            var slot = slots[_contextMenuSlotIndex];
+            if (slot.ItemType != ClipboardItemType.Image || slot.ImageData == null)
+                return;
+
+            string? text;
+            try
+            {
+                text = await OcrService.ExtractTextAsync(slot.ImageData);
+            }
+            catch (Exception ex)
+            {
+                Form1.LogError("OCR extraction error (widget)", ex);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+
+            _clipboardManager.SetSuppressMonitoring(true);
+            try
+            {
+                _clipboardManager.AddSlot(new ClipboardItem(text));
+                ClipboardManager.ClipboardRetry(() => { Clipboard.SetText(text); return true; });
             }
             finally
             {
@@ -561,6 +635,14 @@ namespace CtrlCV
                 SavePosition();
         }
 
+        protected override void OnDpiChanged(DpiChangedEventArgs e)
+        {
+            base.OnDpiChanged(e);
+            RebuildThumbnailCache();
+            CalculateAndResize();
+            Invalidate();
+        }
+
         #endregion
 
         #region Thumbnail Cache
@@ -624,6 +706,7 @@ namespace CtrlCV
 
                 DisposeThumbnailCache();
 
+                _slotContextMenu.Dispose();
                 _previewPopup.Dispose();
                 _centerFormat.Dispose();
             }

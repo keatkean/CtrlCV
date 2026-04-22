@@ -14,6 +14,8 @@ namespace CtrlCV
         private FloatingWidgetForm? _widget;
         private bool _isExiting;
         private readonly Queue<(string Title, string Message)> _pendingEarlyNotifications = new();
+        private bool _cleanedUp;
+
 
         public Form1()
         {
@@ -249,6 +251,12 @@ namespace CtrlCV
 
         private void StoreScreenshot(Bitmap bmp)
         {
+            // If auto-OCR is enabled, clone the image up front so we can keep using it
+            // after the original bmp is disposed below (OCR runs asynchronously).
+            Image? ocrImage = _settings.AutoExtractTextFromScreenshots
+                ? (Image)bmp.Clone()
+                : null;
+
             _clipboardManager.SetSuppressMonitoring(true);
             try
             {
@@ -264,6 +272,54 @@ namespace CtrlCV
             finally
             {
                 bmp.Dispose();
+                BeginInvoke(() => _clipboardManager.SetSuppressMonitoring(false));
+            }
+
+            if (ocrImage != null)
+            {
+                _ = RunOcrAndStoreAsync(ocrImage, ownsImage: true, isAuto: true);
+            }
+        }
+
+        private async Task RunOcrAndStoreAsync(Image image, bool ownsImage, bool isAuto)
+        {
+            string? text;
+            try
+            {
+                text = await OcrService.ExtractTextAsync(image);
+            }
+            catch (Exception ex)
+            {
+                LogError("OCR extraction error", ex);
+                ShowTrayNotification("OCR failed", "An error occurred while extracting text from the image.");
+                return;
+            }
+            finally
+            {
+                if (ownsImage)
+                    image.Dispose();
+            }
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                // Stay quiet on auto-extract when there's no text, so casual screenshots
+                // (e.g. a photo) don't spam the user with tray balloons.
+                if (!isAuto)
+                    ShowTrayNotification("No text found", "OCR did not detect any text in this image.");
+                return;
+            }
+
+            _clipboardManager.SetSuppressMonitoring(true);
+            try
+            {
+                _clipboardManager.AddSlot(new ClipboardItem(text));
+                ClipboardManager.ClipboardRetry(() => { Clipboard.SetText(text); return true; });
+                ShowTrayNotification(
+                    isAuto ? "Text auto-extracted" : "Text extracted",
+                    text.Length > 80 ? text[..80] + "..." : text);
+            }
+            finally
+            {
                 BeginInvoke(() => _clipboardManager.SetSuppressMonitoring(false));
             }
         }
@@ -379,6 +435,23 @@ namespace CtrlCV
             }
         }
 
+        private async void MenuSlotExtractText_Click(object? sender, EventArgs e)
+        {
+            if (listViewSlots.SelectedIndices.Count != 1)
+                return;
+
+            int idx = listViewSlots.SelectedIndices[0];
+            var slots = _clipboardManager.Slots;
+            if (idx >= slots.Count)
+                return;
+
+            var slot = slots[idx];
+            if (slot.ItemType != ClipboardItemType.Image || slot.ImageData == null)
+                return;
+
+            await RunOcrAndStoreAsync(slot.ImageData, ownsImage: false, isAuto: false);
+        }
+
         private void ContextMenuSlot_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
         {
             int count = listViewSlots.SelectedIndices.Count;
@@ -386,6 +459,11 @@ namespace CtrlCV
             menuSlotPin.Enabled = hasSelection;
             menuSlotRemove.Enabled = hasSelection;
             menuSlotRemove.Text = count > 1 ? $"Remove ({count})" : "Remove";
+
+            bool canExtractText = count == 1
+                && listViewSlots.SelectedIndices[0] < _clipboardManager.Slots.Count
+                && _clipboardManager.Slots[listViewSlots.SelectedIndices[0]].ItemType == ClipboardItemType.Image;
+            menuSlotExtractText.Enabled = canExtractText;
 
             if (hasSelection)
             {
@@ -593,6 +671,13 @@ namespace CtrlCV
         {
             _isExiting = true;
             notifyIcon.Visible = false;
+
+            // Dispose auxiliary forms (widget, etc.) BEFORE Application.Exit().
+            // Application.Exit() enumerates Application.OpenForms internally; disposing
+            // a form during that enumeration removes it from the list and throws
+            // "Collection was modified". Clean up here so only Form1 remains open.
+            CleanupResources();
+
             Application.Exit();
         }
 
@@ -609,13 +694,21 @@ namespace CtrlCV
 
         private void CleanupResources()
         {
+            if (_cleanedUp)
+                return;
+            _cleanedUp = true;
+
             try
             {
+                if (_widget != null && !_widget.IsDisposed)
+                    _widget.Dispose();
                 _widget = null;
+
                 _hotkeyManager?.Dispose();
                 _clipboardManager?.Dispose();
                 _store?.Dispose();
                 notifyIcon.Visible = false;
+
             }
             catch (Exception ex)
             {

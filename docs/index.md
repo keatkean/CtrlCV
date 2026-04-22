@@ -80,6 +80,7 @@ When all slots are full, the oldest unpinned item is replaced. Pin important ite
 | **Pin items** | Protect important items from being replaced |
 | **Global hotkeys** | Paste from any slot in any application |
 | **Screenshot tool** | Full screen, active window, or region selection |
+| **Extract text (OCR)** | Right-click any image slot to extract text, or enable automatic extraction after every screenshot |
 | **Context menu** | Pin, remove, or clear items directly from the list |
 | **Multi-select** | Select multiple items with Ctrl+click or Shift+click, then delete in one go |
 | **Configurable** | Change hotkey modifiers, max slots, startup behavior |
@@ -115,6 +116,10 @@ When you press the screenshot hotkey, a context menu appears with three options:
 
 Captured screenshots are stored in the next available slot and placed on the clipboard.
 
+After capturing a screenshot, right-click the image slot and select **Extract Text** to run OCR and copy the recognized text to the clipboard. The extracted text is also stored as a new slot.
+
+To skip the manual step, enable **Auto-extract text from screenshots (OCR)** in Settings. When enabled, every screenshot is automatically run through OCR in the background and the recognized text is added as a new slot and placed on the clipboard. The right-click **Extract Text** option stays available for any image copied from elsewhere.
+
 ---
 
 ## Settings
@@ -126,6 +131,7 @@ Captured screenshots are stored in the next available slot and placed on the cli
 | Screenshot hotkey modifier | Ctrl+Alt | Modifier for screenshot hotkey |
 | Start minimized | Off | Launch minimized to system tray |
 | Run at Windows startup | Off | Auto-start when you log in |
+| Auto-extract text from screenshots (OCR) | Off | Run OCR automatically after every screenshot |
 | Enable floating widget | Off | Show the floating clipboard toolbar |
 | Compact mode | Off | Use small color-coded circles instead of thumbnails |
 | Widget opacity | 85% | Opacity of the floating widget (20-100%) |
@@ -176,7 +182,7 @@ To create a self-contained single-file EXE:
 dotnet publish -p:PublishProfile=SingleFileExe
 ```
 
-The output is a single `CtrlCV.exe` in `bin\Publish\`. Copy it to any Windows 10+ (x64) machine and run -- no installation or runtime required.
+The output is a single `CtrlCV.exe` in `bin\Publish\` (~75 MB). Copy it to any Windows 10+ (x64) machine and run -- no installation or runtime required. The bundle is Brotli-compressed; the first launch extracts native libraries to `%LOCALAPPDATA%\Temp\.net\CtrlCV\` and caches them for subsequent runs.
 
 ---
 
@@ -187,6 +193,7 @@ The output is a single `CtrlCV.exe` in `bin\Publish\`. Copy it to any Windows 10
 - **Only pinned items persist** -- Unpinned clipboard history is session-only and is lost when the app exits. Pin items you want to keep.
 - **Unencrypted DB** -- See the *Security note* above: don't pin secrets.
 - **Text and images only** -- Other clipboard formats (files, rich text, etc.) are not captured.
+- **OCR accuracy** -- Text extraction uses the built-in Windows OCR engine. Accuracy depends on image quality and installed Windows language packs.
 
 ---
 

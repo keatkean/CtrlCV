@@ -12,6 +12,7 @@ namespace CtrlCV
         private ComboBox cmbScreenshotModifier = null!;
         private CheckBox chkStartMinimized = null!;
         private CheckBox chkRunAtStartup = null!;
+        private CheckBox chkAutoExtractText = null!;
         private CheckBox chkWidgetEnabled = null!;
         private CheckBox chkWidgetCompact = null!;
         private TrackBar trkWidgetOpacity = null!;
@@ -44,6 +45,8 @@ namespace CtrlCV
             catch { }
         }
 
+        private int Scale(int baseValue) => (int)Math.Round(baseValue * DeviceDpi / 96.0);
+
         private void InitializeSettingsUI()
         {
             Text = "CtrlCV - Settings";
@@ -53,7 +56,7 @@ namespace CtrlCV
             StartPosition = FormStartPosition.CenterParent;
             ShowInTaskbar = false;
             AutoScaleMode = AutoScaleMode.Dpi;
-            Padding = new Padding(12);
+            Padding = new Padding(Scale(12));
 
             var table = new TableLayoutPanel
             {
@@ -116,6 +119,30 @@ namespace CtrlCV
             table.Controls.Add(chkRunAtStartup, 0, row);
             row++;
 
+            // Auto-extract text from screenshots (OCR)
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            chkAutoExtractText = new CheckBox
+            {
+                Text = "Auto-extract text from screenshots (OCR)",
+                AutoSize = true,
+                Margin = new Padding(3, 3, 3, 3)
+            };
+            table.SetColumnSpan(chkAutoExtractText, 2);
+            table.Controls.Add(chkAutoExtractText, 0, row);
+            row++;
+
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            var lblAutoExtractHint = new Label
+            {
+                Text = "When enabled, text is extracted automatically after each screenshot.\nYou can still right-click any image slot to extract text manually.",
+                AutoSize = true,
+                ForeColor = SystemColors.GrayText,
+                Margin = new Padding(20, 0, 3, 6)
+            };
+            table.SetColumnSpan(lblAutoExtractHint, 2);
+            table.Controls.Add(lblAutoExtractHint, 0, row);
+            row++;
+
             // Widget section separator
             table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             var lblWidgetHeader = new Label
@@ -154,7 +181,7 @@ namespace CtrlCV
                 TickFrequency = 10,
                 SmallChange = 5,
                 LargeChange = 10,
-                Width = 160
+                Width = Scale(160)
             };
             trkWidgetOpacity.ValueChanged += (_, _) =>
             {
@@ -170,7 +197,7 @@ namespace CtrlCV
             table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             var autoHidePanel = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Dock = DockStyle.Fill };
             chkWidgetAutoHide = new CheckBox { Text = "Auto-hide after", AutoSize = true, Margin = new Padding(0, 4, 0, 0) };
-            nudAutoHideDelay = new NumericUpDown { Minimum = 1, Maximum = 10, DecimalPlaces = 0, Width = 50 };
+            nudAutoHideDelay = new NumericUpDown { Minimum = 1, Maximum = 10, DecimalPlaces = 0, Width = Scale(50) };
             var lblSeconds = new Label { Text = "seconds", AutoSize = true, Margin = new Padding(4, 8, 0, 0) };
             autoHidePanel.Controls.Add(chkWidgetAutoHide);
             autoHidePanel.Controls.Add(nudAutoHideDelay);
@@ -305,6 +332,7 @@ namespace CtrlCV
             cmbScreenshotModifier.SelectedIndex = (int)_settings.ScreenshotModifier;
             chkStartMinimized.Checked = _settings.StartMinimized;
             chkRunAtStartup.Checked = _settings.RunAtStartup;
+            chkAutoExtractText.Checked = _settings.AutoExtractTextFromScreenshots;
 
             chkWidgetEnabled.Checked = _settings.WidgetEnabled;
             chkWidgetCompact.Checked = _settings.WidgetCompactMode;
@@ -323,6 +351,7 @@ namespace CtrlCV
             cmbScreenshotModifier.SelectedIndex = (int)defaults.ScreenshotModifier;
             chkStartMinimized.Checked = defaults.StartMinimized;
             chkRunAtStartup.Checked = defaults.RunAtStartup;
+            chkAutoExtractText.Checked = defaults.AutoExtractTextFromScreenshots;
 
             chkWidgetEnabled.Checked = defaults.WidgetEnabled;
             chkWidgetCompact.Checked = defaults.WidgetCompactMode;
@@ -420,6 +449,7 @@ namespace CtrlCV
             var newScreenshotModifier = (ModifierOption)cmbScreenshotModifier.SelectedIndex;
             var newStartMinimized = chkStartMinimized.Checked;
             var newRunAtStartup = chkRunAtStartup.Checked;
+            var newAutoExtractText = chkAutoExtractText.Checked;
             var newWidgetEnabled = chkWidgetEnabled.Checked;
             var newWidgetCompact = chkWidgetCompact.Checked;
             var newWidgetOpacity = trkWidgetOpacity.Value / 100.0;
@@ -433,6 +463,7 @@ namespace CtrlCV
                 newScreenshotModifier != _settings.ScreenshotModifier ||
                 newStartMinimized != _settings.StartMinimized ||
                 newRunAtStartup != _settings.RunAtStartup ||
+                newAutoExtractText != _settings.AutoExtractTextFromScreenshots ||
                 newWidgetEnabled != _settings.WidgetEnabled ||
                 newWidgetCompact != _settings.WidgetCompactMode ||
                 Math.Abs(newWidgetOpacity - _settings.WidgetOpacity) > 0.01 ||
@@ -445,6 +476,7 @@ namespace CtrlCV
             _settings.ScreenshotModifier = newScreenshotModifier;
             _settings.StartMinimized = newStartMinimized;
             _settings.RunAtStartup = newRunAtStartup;
+            _settings.AutoExtractTextFromScreenshots = newAutoExtractText;
             _settings.WidgetEnabled = newWidgetEnabled;
             _settings.WidgetCompactMode = newWidgetCompact;
             _settings.WidgetOpacity = newWidgetOpacity;
