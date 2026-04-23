@@ -5,3 +5,9 @@ url: https://keatkean.github.io
 baseurl: /CtrlCV
 
 show_downloads: false
+
+include:
+  - releases
+
+keep_files:
+  - releases

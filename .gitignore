@@ -42,6 +42,8 @@ launchSettings.json
 ## Build results
 [Dd]ebugPublic/
 [Rr]eleases/
+!docs/releases/
+!docs/releases/**
 build/
 publish/
 
