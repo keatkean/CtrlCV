@@ -212,5 +212,6 @@ This project is licensed under the [GNU General Public License v3.0](https://git
 <p style="text-align: center; color: #888; font-size: 0.85em;">
   Made by <a href="https://github.com/keatkean">keatkean</a> &middot;
   <a href="https://github.com/keatkean/CtrlCV">Source Code</a> &middot;
-  <a href="https://github.com/keatkean/CtrlCV/releases/latest">Releases</a>
+  <a href="https://github.com/keatkean/CtrlCV/releases/latest">Releases</a> &middot;
+  <a href="{{ '/privacy/' | relative_url }}">Privacy Policy</a>
 </p>

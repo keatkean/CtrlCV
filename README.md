@@ -178,6 +178,12 @@ CtrlCV/
 - **Text and images only**: Other clipboard formats (files, rich text, etc.) are not captured.
 - **OCR accuracy**: Text extraction uses the built-in Windows OCR engine. Accuracy depends on image quality and installed Windows language packs.
 
+## Privacy
+
+CtrlCV runs entirely on your device. The developer does not collect any personal data, clipboard contents, screenshots, OCR results, telemetry, or analytics. The only outbound network call is an optional update check to the public GitHub Releases API.
+
+See the full [Privacy Policy](docs/privacy.md) for details (also published at <https://keatkean.github.io/CtrlCV/privacy/>).
+
 ## License
 
 This project is licensed under the [GNU General Public License v3.0](LICENSE).

@@ -1,10 +1,16 @@
 # Changelog
 
+## v1.3.2
+
+### Fixed
+
+- **"Check for Updates" still crashed with `Collection was modified` after a successful download**, even with the v1.3.1 pre-cleanup workaround. The real cause is that `Application.Exit()` itself enumerates `Application.OpenForms` and closes each form, and closing `Form1` removes it from that same list mid-enumeration. The update-and-restart path (and the tray *Exit* menu) now calls `Close()` on the main form instead, letting `Application.Run` unwind naturally. `FormClosing` -> `CleanupResources()` still runs via the normal shutdown path.
+
 ## v1.3.1
 
 ### Fixed
 
-- **"Check for Updates" crashed with `Collection was modified` after a successful download.** `Application.Exit()` enumerates `Application.OpenForms`, and disposing the floating widget mid-enumeration mutated that list. The update-and-restart path now disposes auxiliary forms via `CleanupResources()` before exiting, matching the *Exit* menu behavior.
+- **"Check for Updates" crashed with `Collection was modified` after a successful download.** `Application.Exit()` enumerates `Application.OpenForms`, and disposing the floating widget mid-enumeration mutated that list. The update-and-restart path now disposes auxiliary forms via `CleanupResources()` before exiting, matching the *Exit* menu behavior. *(Incomplete — superseded by v1.3.2.)*
 
 ## v1.3.0
 

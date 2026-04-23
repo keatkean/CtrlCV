@@ -83,7 +83,7 @@ namespace CtrlCV
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
                 _isExiting = true;
-                Application.Exit();
+                BeginInvoke(new Action(Close));
                 return;
             }
 
@@ -606,11 +606,12 @@ namespace CtrlCV
                 UpdateChecker.ApplyUpdateAndRestart(updateFilePath, currentExePath);
                 _isExiting = true;
 
-                // Dispose auxiliary forms (widget, etc.) BEFORE Application.Exit() to avoid
-                // "Collection was modified" when Application.Exit enumerates OpenForms.
-                CleanupResources();
-
-                Application.Exit();
+                // Close the main form instead of calling Application.Exit(). Application.Exit
+                // enumerates Application.OpenForms and closes each form; closing Form1 removes
+                // it from that same list mid-enumeration and throws "Collection was modified".
+                // Letting Application.Run unwind naturally avoids the issue and still runs
+                // FormClosing -> CleanupResources().
+                Close();
             }
             catch (Exception ex)
             {
@@ -677,13 +678,11 @@ namespace CtrlCV
             _isExiting = true;
             notifyIcon.Visible = false;
 
-            // Dispose auxiliary forms (widget, etc.) BEFORE Application.Exit().
-            // Application.Exit() enumerates Application.OpenForms internally; disposing
-            // a form during that enumeration removes it from the list and throws
-            // "Collection was modified". Clean up here so only Form1 remains open.
-            CleanupResources();
-
-            Application.Exit();
+            // Close the main form so Application.Run unwinds naturally. Calling
+            // Application.Exit() here enumerates Application.OpenForms and can throw
+            // "Collection was modified" when forms are disposed mid-enumeration.
+            // FormClosing -> CleanupResources() still runs via the normal shutdown path.
+            Close();
         }
 
         private void RestoreFromTray()
