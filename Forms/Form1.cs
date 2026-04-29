@@ -104,7 +104,34 @@ namespace CtrlCV
                 Hide();
                 WindowState = FormWindowState.Minimized;
             }
+
+#if STORE
+            menuCheckForUpdates.Visible = false;
+#else
+            if (_settings.EnableAutoUpdate)
+            {
+                _ = CheckForUpdatesBackgroundAsync();
+            }
+#endif
         }
+
+#if !STORE
+        private async Task CheckForUpdatesBackgroundAsync()
+        {
+            try
+            {
+                await Task.Delay(5000); // Wait a bit after startup
+                var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                var currentVersion = version != null ? $"{version.Major}.{version.Minor}.{version.Build}" : "0.0.0";
+                var result = await UpdateChecker.CheckForUpdateAsync(currentVersion);
+                if (result.IsUpdateAvailable)
+                {
+                    ShowTrayNotification("Update available", $"CtrlCV v{result.LatestVersion} is available. Right-click the tray icon to download it.");
+                }
+            }
+            catch { }
+        }
+#endif
 
         private void ShowWidget()
         {
@@ -532,6 +559,7 @@ namespace CtrlCV
 
         private async void MenuCheckForUpdates_Click(object? sender, EventArgs e)
         {
+#if !STORE
             menuCheckForUpdates.Enabled = false;
             menuCheckForUpdates.Text = "Checking...";
             try
@@ -628,6 +656,7 @@ namespace CtrlCV
                 menuCheckForUpdates.Text = "Check for Updates";
                 menuCheckForUpdates.Enabled = true;
             }
+#endif
         }
 
         #endregion
@@ -760,7 +789,7 @@ namespace CtrlCV
         {
             try
             {
-                var logPath = Path.Combine(AppContext.BaseDirectory, "ctrlcv_error.log");
+                var logPath = Path.Combine(AppSettings.SettingsDir, "ctrlcv_error.log");
                 var entry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {context}: {ex}\n";
                 File.AppendAllText(logPath, entry);
             }

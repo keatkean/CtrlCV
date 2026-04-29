@@ -27,7 +27,8 @@ When all slots are full, the oldest unpinned item is replaced and you're notifie
 - **Start with Windows** -- optional auto-start at login
 - **Restore defaults** -- one-click reset in settings
 - **Custom app icon** -- branded icon in title bar, taskbar, and system tray
-- **Check for updates** -- check for new versions from GitHub Releases and auto-update in place
+- **Microsoft Store version** -- available natively as an MSIX app in the Store
+- **Check for updates** -- check for new versions from GitHub Releases (optional setting for the standalone `.exe` version)
 - **Floating clipboard widget** -- always-on-top toolbar showing thumbnails of all slots
   - Drag-and-drop from the widget into any app
   - Hover preview shows full text or full-size image
@@ -108,6 +109,12 @@ dotnet run
 ```
 
 Or open `CtrlCV.sln` in Visual Studio 2022 and press F5.
+
+To build the Microsoft Store (MSIX) compliant version, use the `ReleaseStore` configuration, which physically strips out the manual auto-updater:
+
+```bash
+dotnet build -c ReleaseStore
+```
 
 ## Publish (Single-File EXE)
 

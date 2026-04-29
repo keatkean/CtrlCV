@@ -18,6 +18,10 @@ namespace CtrlCV
         public bool RunAtStartup { get; set; } = false;
         public bool AutoExtractTextFromScreenshots { get; set; } = false;
 
+#if !STORE
+        public bool EnableAutoUpdate { get; set; } = false;
+#endif
+
         public bool WidgetEnabled { get; set; } = false;
         public bool WidgetCompactMode { get; set; } = false;
         public double WidgetOpacity { get; set; } = 0.85;
@@ -143,6 +147,9 @@ namespace CtrlCV
             StartMinimized = defaults.StartMinimized;
             RunAtStartup = defaults.RunAtStartup;
             AutoExtractTextFromScreenshots = defaults.AutoExtractTextFromScreenshots;
+#if !STORE
+            EnableAutoUpdate = defaults.EnableAutoUpdate;
+#endif
             WidgetEnabled = defaults.WidgetEnabled;
             WidgetCompactMode = defaults.WidgetCompactMode;
             WidgetOpacity = defaults.WidgetOpacity;

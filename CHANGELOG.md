@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.4.0
+
+### Changed
+- **Microsoft Store Support**: Re-architected to support packaging as an MSIX application for the Microsoft Store.
+- **Log Location**: Moved `ctrlcv_error.log` to `%APPDATA%\CtrlCV\ctrlcv_error.log` to comply with restricted access in MSIX environments.
+- **Auto-Update Toggle**: Added a setting to manually enable/disable auto-updates for the standalone GitHub release (default is now off).
+
 ## v1.3.2
 
 ### Fixed

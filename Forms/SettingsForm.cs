@@ -13,6 +13,9 @@ namespace CtrlCV
         private CheckBox chkStartMinimized = null!;
         private CheckBox chkRunAtStartup = null!;
         private CheckBox chkAutoExtractText = null!;
+#if !STORE
+        private CheckBox chkEnableAutoUpdate = null!;
+#endif
         private CheckBox chkWidgetEnabled = null!;
         private CheckBox chkWidgetCompact = null!;
         private TrackBar trkWidgetOpacity = null!;
@@ -142,6 +145,20 @@ namespace CtrlCV
             table.SetColumnSpan(lblAutoExtractHint, 2);
             table.Controls.Add(lblAutoExtractHint, 0, row);
             row++;
+
+#if !STORE
+            // Enable auto update
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            chkEnableAutoUpdate = new CheckBox
+            {
+                Text = "Enable auto-updates (Not recommended for Microsoft Store versions)",
+                AutoSize = true,
+                Margin = new Padding(3, 3, 3, 3)
+            };
+            table.SetColumnSpan(chkEnableAutoUpdate, 2);
+            table.Controls.Add(chkEnableAutoUpdate, 0, row);
+            row++;
+#endif
 
             // Widget section separator
             table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -333,6 +350,9 @@ namespace CtrlCV
             chkStartMinimized.Checked = _settings.StartMinimized;
             chkRunAtStartup.Checked = _settings.RunAtStartup;
             chkAutoExtractText.Checked = _settings.AutoExtractTextFromScreenshots;
+#if !STORE
+            chkEnableAutoUpdate.Checked = _settings.EnableAutoUpdate;
+#endif
 
             chkWidgetEnabled.Checked = _settings.WidgetEnabled;
             chkWidgetCompact.Checked = _settings.WidgetCompactMode;
@@ -352,6 +372,9 @@ namespace CtrlCV
             chkStartMinimized.Checked = defaults.StartMinimized;
             chkRunAtStartup.Checked = defaults.RunAtStartup;
             chkAutoExtractText.Checked = defaults.AutoExtractTextFromScreenshots;
+#if !STORE
+            chkEnableAutoUpdate.Checked = defaults.EnableAutoUpdate;
+#endif
 
             chkWidgetEnabled.Checked = defaults.WidgetEnabled;
             chkWidgetCompact.Checked = defaults.WidgetCompactMode;
@@ -450,6 +473,9 @@ namespace CtrlCV
             var newStartMinimized = chkStartMinimized.Checked;
             var newRunAtStartup = chkRunAtStartup.Checked;
             var newAutoExtractText = chkAutoExtractText.Checked;
+#if !STORE
+            var newEnableAutoUpdate = chkEnableAutoUpdate.Checked;
+#endif
             var newWidgetEnabled = chkWidgetEnabled.Checked;
             var newWidgetCompact = chkWidgetCompact.Checked;
             var newWidgetOpacity = trkWidgetOpacity.Value / 100.0;
@@ -464,6 +490,9 @@ namespace CtrlCV
                 newStartMinimized != _settings.StartMinimized ||
                 newRunAtStartup != _settings.RunAtStartup ||
                 newAutoExtractText != _settings.AutoExtractTextFromScreenshots ||
+#if !STORE
+                newEnableAutoUpdate != _settings.EnableAutoUpdate ||
+#endif
                 newWidgetEnabled != _settings.WidgetEnabled ||
                 newWidgetCompact != _settings.WidgetCompactMode ||
                 Math.Abs(newWidgetOpacity - _settings.WidgetOpacity) > 0.01 ||
@@ -477,6 +506,9 @@ namespace CtrlCV
             _settings.StartMinimized = newStartMinimized;
             _settings.RunAtStartup = newRunAtStartup;
             _settings.AutoExtractTextFromScreenshots = newAutoExtractText;
+#if !STORE
+            _settings.EnableAutoUpdate = newEnableAutoUpdate;
+#endif
             _settings.WidgetEnabled = newWidgetEnabled;
             _settings.WidgetCompactMode = newWidgetCompact;
             _settings.WidgetOpacity = newWidgetOpacity;

@@ -96,7 +96,7 @@ namespace CtrlCV
             {
                 MessageBox.Show(
                     $"An unexpected error occurred:\n\n{ex.Message}\n\n" +
-                    "Details have been written to ctrlcv_error.log.\n" +
+                    "Details have been written to %APPDATA%\\CtrlCV\\ctrlcv_error.log.\n" +
                     "The application will now close.",
                     "CtrlCV - Unexpected Error",
                     MessageBoxButtons.OK,

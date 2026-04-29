@@ -53,9 +53,9 @@ title: CtrlCV - Multi-Slot Clipboard Manager
 Copy up to 10 items, paste any of them instantly with a hotkey, and capture screenshots -- all from one lightweight app.
 
 <div class="download-box">
-  <a href="https://github.com/keatkean/CtrlCV/releases/latest" class="download-btn">Download Latest Release</a>
-  <a href="https://github.com/keatkean/CtrlCV" class="github-btn">View on GitHub</a>
-  <br><small>Windows 10+ (x64) &middot; No installation required &middot; Single-file EXE</small>
+  <a href="ms-windows-store://pdp/?productid=YOUR_PRODUCT_ID" class="download-btn">Get it from Microsoft Store</a>
+  <a href="https://github.com/keatkean/CtrlCV/releases/latest" class="github-btn">Download from GitHub</a>
+  <br><small>Windows 10+ (x64) &middot; Available as Store App or Single-file EXE</small>
 </div>
 
 ---
@@ -88,7 +88,7 @@ When all slots are full, the oldest unpinned item is replaced. Pin important ite
 | **DPI-aware** | Scales correctly across different displays and scaling settings |
 | **Single instance** | Prevents multiple copies from running |
 | **Start with Windows** | Optional auto-start at login |
-| **Check for updates** | Check for new versions from GitHub Releases and auto-update in place |
+| **Check for updates** | Optional auto-update for the GitHub release |
 | **Floating widget** | Always-on-top toolbar with slot thumbnails, drag-and-drop, hover preview, compact mode, and auto-hide |
 | **Pinned persistence** | Pinned items and settings survive restarts, stored locally via LiteDB (large images via GridFS) |
 
@@ -205,8 +205,9 @@ This project is licensed under the [GNU General Public License v3.0](https://git
 
 <div class="download-box">
   <strong style="font-size: 1.1rem;">Ready to try CtrlCV?</strong><br><br>
-  <a href="https://github.com/keatkean/CtrlCV/releases/latest" class="download-btn">Download Latest Release</a>
-  <br><small>Windows 10+ (x64) &middot; No installation required &middot; Single-file EXE</small>
+  <a href="ms-windows-store://pdp/?productid=YOUR_PRODUCT_ID" class="download-btn">Get it from Microsoft Store</a>
+  <a href="https://github.com/keatkean/CtrlCV/releases/latest" class="github-btn">Download Latest Release</a>
+  <br><small>Windows 10+ (x64) &middot; Available as Store App or Single-file EXE</small>
 </div>
 
 <p style="text-align: center; color: #888; font-size: 0.85em;">

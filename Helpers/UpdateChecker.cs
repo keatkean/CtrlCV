@@ -1,3 +1,4 @@
+#if !STORE
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text.Json;
