@@ -69,3 +69,6 @@ $RECYCLE.BIN/
 
 ## Application logs and config
 ctrlcv_error.log
+
+## Code Signing Certificates
+*.pfx
