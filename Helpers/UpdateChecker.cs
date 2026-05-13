@@ -1,4 +1,4 @@
-#if !STORE
+
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -14,6 +14,20 @@ namespace CtrlCV
 
     public static class UpdateChecker
     {
+
+        public static bool IsRunningAsMsix()
+        {
+            try
+            {
+                return Windows.ApplicationModel.Package.Current != null;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+#if !STORE
         private const string GitHubApiUrl =
             "https://api.github.com/repos/keatkean/CtrlCV/releases/latest";
 
@@ -122,5 +136,6 @@ namespace CtrlCV
                 CreateNoWindow = true
             });
         }
+#endif
     }
 }

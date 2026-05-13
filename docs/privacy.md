@@ -31,7 +31,7 @@ To provide its functionality, CtrlCV processes the following data **entirely on 
 
 ## 3. Network connections
 
-CtrlCV makes only one type of outbound network request: an optional update check to the public GitHub Releases API (`https://api.github.com/repos/keatkean/CtrlCV/releases/latest`) to determine whether a newer version of the app is available, and to download the new version if you choose to update. These requests contain no personal information beyond what is inherent to any HTTPS request (such as your IP address, which is seen by GitHub under [GitHub's own Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement)).
+CtrlCV makes only one type of outbound network request: an optional update check to the public GitHub Releases API (`https://api.github.com/repos/keatkean/CtrlCV/releases/latest`) to determine whether a newer version of the app is available, and to download the new version if you choose to update. **Note: This update check is completely removed from the Microsoft Store version of the app, making the Store version a 100% offline utility.** These requests contain no personal information beyond what is inherent to any HTTPS request (such as your IP address, which is seen by GitHub under [GitHub's own Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement)).
 
 The app does **not** send your clipboard data, screenshots, settings, or any other user content over the network.
 

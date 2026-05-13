@@ -6,6 +6,8 @@
 - **Microsoft Store Support**: Re-architected to support packaging as an MSIX application for the Microsoft Store.
 - **Log Location**: Moved `ctrlcv_error.log` to `%APPDATA%\CtrlCV\ctrlcv_error.log` to comply with restricted access in MSIX environments.
 - **Auto-Update Toggle**: Added a setting to manually enable/disable auto-updates for the standalone GitHub release (default is now off).
+- **Store-Compliant Updates**: The GitHub update checker is now completely stripped from the binary when building for the Microsoft Store to comply with store policies.
+- **Offline Utility**: Removed the `internetClient` capability from the MSIX package. The Microsoft Store version is now a 100% offline utility for enhanced privacy.
 
 ## v1.3.2
 

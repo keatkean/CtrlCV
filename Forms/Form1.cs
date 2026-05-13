@@ -105,10 +105,12 @@ namespace CtrlCV
                 WindowState = FormWindowState.Minimized;
             }
 
-#if STORE
-            menuCheckForUpdates.Visible = false;
-#else
-            if (_settings.EnableAutoUpdate)
+            if (UpdateChecker.IsRunningAsMsix())
+            {
+                menuCheckForUpdates.Visible = false;
+            }
+#if !STORE
+            else if (_settings.EnableAutoUpdate)
             {
                 _ = CheckForUpdatesBackgroundAsync();
             }

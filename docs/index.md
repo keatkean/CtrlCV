@@ -88,7 +88,7 @@ When all slots are full, the oldest unpinned item is replaced. Pin important ite
 | **DPI-aware** | Scales correctly across different displays and scaling settings |
 | **Single instance** | Prevents multiple copies from running |
 | **Start with Windows** | Optional auto-start at login |
-| **Check for updates** | Optional auto-update for the GitHub release |
+| **Check for updates** | Optional auto-update for the GitHub release (completely removed from the Store version) |
 | **Floating widget** | Always-on-top toolbar with slot thumbnails, drag-and-drop, hover preview, compact mode, and auto-hide |
 | **Pinned persistence** | Pinned items and settings survive restarts, stored locally via LiteDB (large images via GridFS) |
 
@@ -175,6 +175,12 @@ dotnet run
 ```
 
 Or open `CtrlCV.sln` in Visual Studio 2022 and press F5.
+
+To build the Microsoft Store (MSIX) compliant version, use the `ReleaseStore` configuration, which physically strips out the manual auto-updater and ensures the app requires no internet capabilities:
+
+```bash
+dotnet build -c ReleaseStore
+```
 
 To create a self-contained single-file EXE:
 

@@ -27,8 +27,8 @@ When all slots are full, the oldest unpinned item is replaced and you're notifie
 - **Start with Windows** -- optional auto-start at login
 - **Restore defaults** -- one-click reset in settings
 - **Custom app icon** -- branded icon in title bar, taskbar, and system tray
-- **Microsoft Store version** -- available natively as an MSIX app in the Store
-- **Check for updates** -- check for new versions from GitHub Releases (optional setting for the standalone `.exe` version)
+- **Microsoft Store version** -- available natively as an MSIX app in the Store (100% offline, no internet capability required)
+- **Check for updates** -- check for new versions from GitHub Releases (optional setting for the standalone `.exe` version; completely stripped from the Store version)
 - **Floating clipboard widget** -- always-on-top toolbar showing thumbnails of all slots
   - Drag-and-drop from the widget into any app
   - Hover preview shows full text or full-size image
@@ -110,7 +110,7 @@ dotnet run
 
 Or open `CtrlCV.sln` in Visual Studio 2022 and press F5.
 
-To build the Microsoft Store (MSIX) compliant version, use the `ReleaseStore` configuration, which physically strips out the manual auto-updater:
+To build the Microsoft Store (MSIX) compliant version, use the `ReleaseStore` configuration, which physically strips out the manual auto-updater and ensures the app requires no internet capabilities:
 
 ```bash
 dotnet build -c ReleaseStore
@@ -187,7 +187,7 @@ CtrlCV/
 
 ## Privacy
 
-CtrlCV runs entirely on your device. The developer does not collect any personal data, clipboard contents, screenshots, OCR results, telemetry, or analytics. The only outbound network call is an optional update check to the public GitHub Releases API.
+CtrlCV runs entirely on your device. The developer does not collect any personal data, clipboard contents, screenshots, OCR results, telemetry, or analytics. The only outbound network call is an optional update check to the public GitHub Releases API (this update check is completely removed from the Microsoft Store version, making it a 100% offline utility).
 
 See the full [Privacy Policy](docs/privacy.md) for details (also published at <https://keatkean.github.io/CtrlCV/privacy/>).
 
