@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.4.2
+
+### Build / Packaging
+
+- **`scripts\build-store-package.ps1`** — new one-shot script that produces the Microsoft Store `.msixupload` bundle (x64 + ARM64, `ReleaseStore`, unsigned for Store re-signing). Locates MSBuild via `vswhere`, cleans stale `obj\wappublish\` between runs, and supports `-BumpRevision` to increment the manifest's 4th version component and `-RunWack` to chain the Windows App Certification Kit on the produced bundle.
+- **EXE assembly version bumped to `1.4.2.0`** in `CtrlCV.csproj` so `Assembly`/`File` versions stay aligned with the MSIX package version exposed in Partner Center and the app's Properties dialog. (No runtime behaviour change.)
+- **`ReleaseStore` is now a full solution-level configuration.** Added `ReleaseStore` mappings for both `CtrlCV` and `CtrlCV.Package` in `CtrlCV.sln` (covering `Any CPU`, `x86`, `x64`, `ARM`, `ARM64`) so it appears in Visual Studio's Configuration Manager and the *Create App Packages* wizard's per-architecture dropdowns. Previously the configuration only existed inside the project files, which produced "Current solution contains unknown project configuration mappings" warnings whenever the wapproj was packaged.
+- **`CtrlCV.csproj`** now declares `<Configurations>Debug;Release;ReleaseStore</Configurations>` (silences the unknown-mapping warning for SDK-style projects, which default to `Debug;Release`) and `<RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>` (so `dotnet restore` materialises per-RID asset graphs that the WAP `wappublish` target later consumes).
+- **Documented MSBuild-based MSIX build flow.** README and `docs/index.md` now describe both the wrapper script and the equivalent raw `MSBuild /restore` invocation on `CtrlCV.Package.wapproj` with `UapAppxPackageBuildMode=StoreUpload`. The Visual Studio *Publish > Create App Packages* wizard has a known ordering bug on .NET 8 + WAP where `obj\wappublish\<RID>\project.assets.json` is not pre-populated, causing the build to fail with *"Assets file not found. Run a NuGet package restore to generate this file."*; the CLI path avoids it.
+- **Manifest publisher identity** in `CtrlCV.Package\Package.appxmanifest` now matches the values issued by Partner Center for this app, so the `.msixupload` is accepted on first upload instead of being rejected with a publisher/identity mismatch.
+
 ## v1.4.0
 
 ### Changed

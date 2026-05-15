@@ -182,6 +182,16 @@ To build the Microsoft Store (MSIX) compliant version, use the `ReleaseStore` co
 dotnet build -c ReleaseStore
 ```
 
+To produce the actual `.msixupload` bundle that Microsoft Partner Center accepts (x64 + ARM64, signing deferred to the Store), use the wrapper script:
+
+```powershell
+.\scripts\build-store-package.ps1                  # build using the manifest's current version
+.\scripts\build-store-package.ps1 -BumpRevision    # bump the 4th version component first
+.\scripts\build-store-package.ps1 -BumpRevision -RunWack  # also run the Windows App Certification Kit
+```
+
+The script wraps an `MSBuild /restore` invocation on `CtrlCV.Package.wapproj` (with `Configuration=ReleaseStore`, `AppxBundlePlatforms="x64|arm64"`, `UapAppxPackageBuildMode=StoreUpload`). It is preferred over the Visual Studio "Create App Packages" wizard, which has a known ordering bug on .NET 8 + WAP. The output `.msixupload` lands in `AppPackages\` and can be uploaded directly on the Partner Center submission's *Packages* page. See the README for the flag-by-flag explanation and the Windows App Certification Kit (WACK) details.
+
 To create a self-contained single-file EXE:
 
 ```bash

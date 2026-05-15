@@ -72,3 +72,5 @@ ctrlcv_error.log
 
 ## Code Signing Certificates
 *.pfx
+/AppPackages
+/CtrlCV.Package/BundleArtifacts

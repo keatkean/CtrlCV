@@ -116,6 +116,55 @@ To build the Microsoft Store (MSIX) compliant version, use the `ReleaseStore` co
 dotnet build -c ReleaseStore
 ```
 
+## Publish (Microsoft Store MSIX bundle)
+
+The Store submission accepts a single `.msixupload` file that bundles every architecture you ship. The repo contains a wrapper script that builds it via MSBuild on `CtrlCV.Package.wapproj` — preferred over the Visual Studio "Create App Packages" wizard, which has a known issue on .NET 8 where `obj\wappublish\<RID>\project.assets.json` is not pre-populated and the build fails with *"Assets file not found. Run a NuGet package restore to generate this file."*.
+
+```powershell
+# from the repo root, in PowerShell
+.\scripts\build-store-package.ps1                  # build using the manifest's current version
+.\scripts\build-store-package.ps1 -BumpRevision    # bump the 4th version component first
+.\scripts\build-store-package.ps1 -BumpRevision -RunWack  # also run the Windows App Certification Kit
+```
+
+The script:
+
+- Locates MSBuild via `vswhere` (no hard-coded paths).
+- Cleans stale `obj\wappublish\` to avoid half-built per-RID restore state from a prior failed run.
+- Builds with `Configuration=ReleaseStore` so the `STORE` compile constant strips the GitHub `UpdateChecker` from the binary (Microsoft Store policy 10.8.1 forbids third-party auto-update mechanisms).
+- Bundles **x64 + ARM64** into a single submission. (x86 and 32-bit ARM are intentionally omitted; the `net8.0-windows10.0.19041.0` target framework already requires Windows 10 20H1+, where x86 desktops are essentially extinct, and 32-bit ARM was deprecated long ago.)
+- Sets `UapAppxPackageBuildMode=StoreUpload` to produce a `.msixupload` (the file Partner Center accepts), not a sideload-only `.msix`.
+- Leaves `AppxPackageSigningEnabled=false` (matching `CtrlCV.Package.wapproj`); the Microsoft Store re-signs the package server-side with the publisher certificate, so no local signing key is required.
+
+The output lands at:
+
+```
+AppPackages\CtrlCV.Package_<version>_ReleaseStore_Test\CtrlCV.Package_<version>_x64_arm64_ReleaseStore.msixbundle
+AppPackages\CtrlCV.Package_<version>_x64_arm64_bundle_ReleaseStore.msixupload
+```
+
+Drag the `.msixupload` into the **Packages** page of the app's Partner Center submission and tick **Windows 10/11 Desktop** under *Device family availability* (other device families don't support `runFullTrust` packaged Win32 apps).
+
+Equivalent raw MSBuild command (if you'd rather not use the script):
+
+```powershell
+$msbuild = (& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
+    -latest -requires Microsoft.Component.MSBuild `
+    -find "MSBuild\**\Bin\MSBuild.exe")
+
+& $msbuild .\CtrlCV.Package\CtrlCV.Package.wapproj `
+    /restore `
+    /p:Configuration=ReleaseStore `
+    /p:Platform=x64 `
+    /p:AppxBundle=Always `
+    /p:AppxBundlePlatforms="x64|arm64" `
+    /p:UapAppxPackageBuildMode=StoreUpload `
+    /p:AppxPackageSigningEnabled=false `
+    /p:AppxPackageDir="$PWD\AppPackages\\"
+```
+
+The Store-reserved Package Identity values (`Identity/Name`, `Publisher`, `PublisherDisplayName`) live in `CtrlCV.Package\Package.appxmanifest` and are tied to the publisher's Partner Center account. They are committed to the repository as the values for this app's listing; if you fork CtrlCV and want to publish your own Store build, replace those three fields with your own from Partner Center → *App identity*.
+
 ## Publish (Single-File EXE)
 
 To create a self-contained single-file EXE that runs on any Windows x64 machine without .NET installed:
