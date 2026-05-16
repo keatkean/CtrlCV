@@ -2,6 +2,10 @@
 
 A lightweight Windows clipboard manager that stores up to 10 copied items (text and images) and lets you paste any of them instantly with a keyboard shortcut.
 
+<a href="https://get.microsoft.com/installer/download/9ngvnm1prrkb?referrer=appbadge" target="_self">
+  <img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200" alt="Get it from Microsoft Store"/>
+</a>
+
 ## How It Works
 
 1. **Copy anything as usual** (Ctrl+C) -- each copied item is automatically saved into a numbered slot.

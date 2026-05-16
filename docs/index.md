@@ -53,7 +53,7 @@ title: CtrlCV - Multi-Slot Clipboard Manager
 Copy up to 10 items, paste any of them instantly with a hotkey, and capture screenshots -- all from one lightweight app.
 
 <div class="download-box">
-  <a href="ms-windows-store://pdp/?productid=YOUR_PRODUCT_ID" class="download-btn">Get it from Microsoft Store</a>
+  <a href="https://get.microsoft.com/installer/download/9ngvnm1prrkb?referrer=appbadge" class="download-btn">Get it from Microsoft Store</a>
   <a href="https://github.com/keatkean/CtrlCV/releases/latest" class="github-btn">Download from GitHub</a>
   <br><small>Windows 10+ (x64) &middot; Available as Store App or Single-file EXE</small>
 </div>
@@ -221,7 +221,7 @@ This project is licensed under the [GNU General Public License v3.0](https://git
 
 <div class="download-box">
   <strong style="font-size: 1.1rem;">Ready to try CtrlCV?</strong><br><br>
-  <a href="ms-windows-store://pdp/?productid=YOUR_PRODUCT_ID" class="download-btn">Get it from Microsoft Store</a>
+  <a href="https://get.microsoft.com/installer/download/9ngvnm1prrkb?referrer=appbadge" class="download-btn">Get it from Microsoft Store</a>
   <a href="https://github.com/keatkean/CtrlCV/releases/latest" class="github-btn">Download Latest Release</a>
   <br><small>Windows 10+ (x64) &middot; Available as Store App or Single-file EXE</small>
 </div>
